@@ -1,13 +1,17 @@
-package org.example;
+package parser;
 
 import org.example.entities.*;
-import org.example.pages.BaseAbstractPage;
+import parser.entities.Book;
+import parser.pages.BaseAbstractPage;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.openqa.selenium.By;
 import org.openqa.selenium.support.ui.ExpectedConditions;
+import parser.entities.BookDescription;
+import parser.entities.BookDescriptionForGroups;
+import parser.entities.BookForGroups;
 
 import java.io.IOException;
 import java.util.ArrayList;

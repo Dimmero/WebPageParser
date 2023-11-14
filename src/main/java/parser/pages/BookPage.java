@@ -1,4 +1,4 @@
-package org.example.pages;
+package parser.pages;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
@@ -7,8 +7,6 @@ import org.openqa.selenium.support.PageFactory;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class BookPage extends BaseAbstractPage{
     @FindBy(xpath = "//div[@class='authors']")

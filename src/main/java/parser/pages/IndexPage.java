@@ -1,4 +1,4 @@
-package org.example.pages;
+package parser.pages;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;

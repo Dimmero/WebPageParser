@@ -1,4 +1,4 @@
-package org.example;
+package parser;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.openqa.selenium.chrome.ChromeOptions;

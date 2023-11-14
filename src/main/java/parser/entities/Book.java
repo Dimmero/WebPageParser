@@ -1,4 +1,4 @@
-package org.example.entities;
+package parser.entities;
 
 import lombok.*;
 

@@ -1,4 +1,4 @@
-package org.example;
+package parser;
 
 public enum GroupTypes {
     SERIES,

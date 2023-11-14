@@ -1,8 +1,8 @@
-package org.example;
+package parser;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.example.entities.Book;
+import parser.entities.Book;
 
 import java.io.File;
 import java.io.IOException;

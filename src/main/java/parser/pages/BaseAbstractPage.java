@@ -1,6 +1,6 @@
-package org.example.pages;
+package parser.pages;
 
-import org.example.SeleniumDriver;
+import parser.SeleniumDriver;
 
 public class BaseAbstractPage {
     public static SeleniumDriver driver;
