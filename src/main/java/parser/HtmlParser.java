@@ -1,6 +1,5 @@
 package parser;
 
-import org.example.entities.*;
 import parser.entities.Book;
 import parser.pages.BaseAbstractPage;
 import org.jsoup.Jsoup;

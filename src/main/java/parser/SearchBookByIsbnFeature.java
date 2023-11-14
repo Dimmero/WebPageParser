@@ -1,7 +1,6 @@
 package parser;
 
 import parser.entities.BookForGroups;
-import org.example.pages.*;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import parser.pages.*;
 
