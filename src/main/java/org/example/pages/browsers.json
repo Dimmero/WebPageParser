@@ -1,0 +1,28 @@
+{
+  "chrome": {
+    "default": "91.0",
+    "versions": {
+      "91.0": {
+        "image": "dumbdumbych/selenium_vnc_chrome_arm64:91.0.b",
+        "port": "4444",
+        "shmSize" : 1073741824,
+        "tmpfs": {
+          "/tmp": "size=1g"
+        }
+      }
+    }
+  },
+  "firefox": {
+    "default": "91.0",
+    "versions": {
+      "91.0": {
+        "image": "dumbdumbych/selenium_vnc_chrome_arm64:91.0.b",
+        "port": "4444",
+        "shmSize" : 1073741824,
+        "tmpfs": {
+          "/tmp": "size=1g"
+        }
+      }
+    }
+  }
+}
