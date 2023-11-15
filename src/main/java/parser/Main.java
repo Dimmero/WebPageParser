@@ -14,7 +14,8 @@ public class Main {
 
     public static void main(String[] args) throws IOException, URISyntaxException {
         String isbn = args[0];
-        webPageUrl = System.getenv("PARSE_SERVICE");
+//        webPageUrl = System.getenv("PARSE_SERVICE");
+        webPageUrl = "http://labirint.ru";
         String jarPath = "";
         try {
             File jarFile = new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI());
