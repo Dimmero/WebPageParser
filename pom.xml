@@ -56,15 +56,15 @@
             <version>2.20.0</version> <!-- Use the latest version -->
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.seleniumhq.selenium/selenium-remote-driver -->
-        <dependency>
-            <groupId>org.seleniumhq.selenium</groupId>
-            <artifactId>selenium-remote-driver</artifactId>
-            <version>4.10.0</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.seleniumhq.selenium</groupId>-->
+<!--            <artifactId>selenium-remote-driver</artifactId>-->
+<!--            <version>4.10.0</version>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>org.seleniumhq.selenium</groupId>
             <artifactId>selenium-support</artifactId>
-            <version>4.8.3</version>
+            <version>4.15.0</version>
         </dependency>
         <dependency>
             <groupId>org.seleniumhq.selenium</groupId>
