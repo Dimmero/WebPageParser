@@ -1,20 +1,15 @@
 package parser;
 
-import io.github.bonigarcia.wdm.WebDriverManager;
 import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
-import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
@@ -48,7 +43,7 @@ public class SeleniumDriver {
         seleniumPath = System.getenv("SELENIUM_PATH");
         URL urlHost = new URI("http://" + seleniumHost + ":" + seleniumPort + seleniumPath).toURL();
         driver = new RemoteWebDriver(
-                urlHost, chromeOptions
+                urlHost, chromeOptions, false
         );
         String sessionId = driver.getSessionId().toString();
         System.out.println(sessionId);

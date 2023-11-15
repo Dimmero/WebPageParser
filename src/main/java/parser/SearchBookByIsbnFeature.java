@@ -1,8 +1,10 @@
 package parser;
 
 import parser.entities.BookForGroups;
+import parser.pages.*;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import parser.pages.*;
+
 
 import java.io.IOException;
 import java.net.MalformedURLException;
