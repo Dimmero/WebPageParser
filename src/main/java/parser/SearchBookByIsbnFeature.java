@@ -26,8 +26,8 @@ public class SearchBookByIsbnFeature extends BaseAbstractPage {
 
     public String provideIsbnAndGoToBookPage(String isbn, String webPageUrl) {
         driver.getDriver().get(webPageUrl);
-        INDEX_PAGE.sendIsbnAndSubmit(isbn);
         COOKIES.turnOffCookies();
+        INDEX_PAGE.sendIsbnAndSubmit(isbn);
         SEARCH_PAGE.clickBookCard();
         driver.sleepForSomeTime(1);
         return driver.getDriver().getCurrentUrl();
@@ -60,7 +60,7 @@ public class SearchBookByIsbnFeature extends BaseAbstractPage {
             HtmlParser parser = new HtmlParser(hrefs.get(i), Main.webPageUrl);
             driver.getDriver().get(hrefs.get(i));
             try {
-                driver.getShortWait10().pollingEvery(Duration.ofMillis(500)).until(ExpectedConditions.urlToBe(hrefs.get(i)));
+                driver.getShortWait10().pollingEvery(Duration.ofMillis(500)).until(ExpectedConditions.urlContains(hrefs.get(i).substring(20)));
             } catch (Exception e) {
                 continue;
             }
