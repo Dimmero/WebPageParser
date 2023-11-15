@@ -1,11 +1,11 @@
 package parser;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import parser.entities.Book;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class JsonWriter {
@@ -26,8 +26,8 @@ public class JsonWriter {
     private void fetchBooksFromFile() {
         if (file.exists()) {
             try {
-                Book[] booksArray = objectMapper.readValue(file, Book[].class);
-                booksList = Arrays.asList(booksArray);
+                booksList = objectMapper.readValue(file, new TypeReference<>() {
+                });
             } catch (IOException e) {
                 e.printStackTrace();
             }
