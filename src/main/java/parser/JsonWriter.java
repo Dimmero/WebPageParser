@@ -2,7 +2,6 @@ package parser;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import parser.entities.Book;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -10,13 +9,12 @@ import java.util.Arrays;
 import java.util.List;
 
 public class JsonWriter {
-    private String path = "books.json";
-    private File file;
+    private final File file;
     private List<Book> booksList;
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
 
     public JsonWriter(String pathJar) {
-        this.file = new File(pathJar + this.path);
+        this.file = new File(pathJar + "books.json");
         this.booksList = new ArrayList<>();
         this.objectMapper = new ObjectMapper();
     }

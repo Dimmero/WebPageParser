@@ -99,45 +99,6 @@ public class HtmlParser extends BaseAbstractPage {
         return book;
     }
 
-    public List<List<String>> getBooksHrefFromSection1() {
-        List<String> hrefsSeries;
-        List<String> hrefsAuthor;
-        List<String> hrefsSameGenre;
-        driver.getShortWait10().until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.tagName("html")));
-        String html = driver.getDriver().getPageSource();
-        Document document = Jsoup.parse(html);
-        Element sectionSeries = document.selectFirst("div[data-title*=книги из серии]");
-        Element sectionAuthor = document.selectFirst("div[data-title*=книги автора]");
-        ;
-        Element sectionSameGenre = document.selectFirst("div[data-title*=другие издания в жанре]");
-        assert sectionSeries != null;
-        assert sectionSameGenre != null;
-        assert sectionAuthor != null;
-        Elements seriesSectionElements = sectionSeries.select("div.product.need-watch");
-        Elements authorSectionElements = sectionAuthor.select("div.product.need-watch");
-        Elements genreSectionElements = sectionSameGenre.select("div.product.need-watch");
-        List<List<String>> lists = new ArrayList<>();
-        hrefsSeries = extractHrefsOfSection(seriesSectionElements);
-        hrefsAuthor = extractHrefsOfSection(authorSectionElements);
-        hrefsSameGenre = extractHrefsOfSection(genreSectionElements);
-        lists.add(hrefsSeries);
-        lists.add(hrefsAuthor);
-        lists.add(hrefsSameGenre);
-        return new ArrayList<>(lists);
-    }
-
-
-    public List<String> getBooksHrefFromSection(String sectionUrl) {
-        driver.getDriver().get(sectionUrl);
-        List<String> sectionHrefs;
-        driver.getShortWait10().until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.tagName("html")));
-        String html = driver.getDriver().getPageSource();
-        Document document = Jsoup.parse(html);
-        Elements sectionSectionElements = document.select("a.cover");
-        sectionHrefs = extractHrefsOfSection(sectionSectionElements);
-        return new ArrayList<>(sectionHrefs);
-    }
-
     public List<String> getBooksForNthElementsOfSection(List<String> hrefs, int element) {
         List<String> sectionHrefs = null;
         for (int i = 0; i < element; i++) {

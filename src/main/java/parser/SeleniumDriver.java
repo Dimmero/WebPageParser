@@ -42,7 +42,6 @@ public class SeleniumDriver {
         seleniumPort = System.getenv("SELENIUM_PORT");
         seleniumPath = System.getenv("SELENIUM_PATH");
         URL urlHost = new URI("http://" + seleniumHost + ":" + seleniumPort + seleniumPath).toURL();
-        System.out.println(urlHost);
         driver = new RemoteWebDriver(
                 urlHost, chromeOptions, false
         );
