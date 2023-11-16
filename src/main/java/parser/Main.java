@@ -5,7 +5,6 @@ import parser.entities.Book;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.List;
 
 public class Main {
@@ -26,7 +25,7 @@ public class Main {
             SearchBookByIsbnFeature searchBookByIsbnFeature = new SearchBookByIsbnFeature();
             String mainBookUrl = searchBookByIsbnFeature.provideIsbnAndGoToBookPage(isbn, webPageUrl);
             HtmlParser htmlParser = new HtmlParser(mainBookUrl, webPageUrl);
-            book = htmlParser.createBookData();
+            book = htmlParser.createBookData(Book.class);
             String seriesUrl = htmlParser.getSectionUrl(GroupTypes.SERIES, mainBookUrl);
             String authorsUrl = htmlParser.getSectionUrl(GroupTypes.AUTHORS, mainBookUrl);
             String genresUrl = htmlParser.getSectionUrl(GroupTypes.GENRE, mainBookUrl);

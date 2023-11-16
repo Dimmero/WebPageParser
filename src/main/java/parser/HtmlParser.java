@@ -10,6 +10,7 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,20 +37,34 @@ public class HtmlParser extends BaseAbstractPage {
         this.webPageUrl = webPageUrl;
     }
 
-    public Book createBookData() throws IOException {
-        Book book = new Book();
-        Document document = Jsoup.connect(urlSource).get();
-        Element productInfo = document.selectFirst(this.productInfoCss);
-        Element productImage = document.selectFirst(this.productImageCss);
+    public <T extends BookInterface> T createBookData(Class<T> bookType) {
         try {
-            if (productInfo != null && productImage != null) {
-                BookDescription bookDescription = setDescriptionForMainBook(productInfo, productImage);
-                book.setBookDescription(bookDescription);
+            T book = bookType.getDeclaredConstructor().newInstance();
+            Document document = Jsoup.connect(urlSource).get();
+            Element productInfo = document.selectFirst(this.productInfoCss);
+            if (bookType.getName().equals(Book.class.getName())) {
+                Element productImage = document.selectFirst(this.productImageCss);
+                try {
+                    if (productInfo != null && productImage != null) {
+                        BookDescription bookDescription = setDescriptionForMainBook(productInfo, productImage);
+                        book.initializeMainBook(bookDescription);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } else {
+                if (productInfo != null) {
+                    BookDescriptionForGroups bookDescriptionForGroups = setDescriptionForSeriesBook(productInfo);
+                    book.initializeRelatedBook(bookDescriptionForGroups);
+                }
             }
-        } catch (Exception e) {
+            return book;
+        } catch (IOException | NoSuchMethodException e) {
             e.getStackTrace();
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException(e);
         }
-        return book;
+        return null;
     }
 
     private BookDescription setDescriptionForMainBook(Element productInfo, Element productImage) {
@@ -77,34 +92,21 @@ public class HtmlParser extends BaseAbstractPage {
         return new BookDescription(author, title, publisher, series, bookId, isbns, images);
     }
 
-    public BookForGroups createBookForGroupsData() throws IOException {
-        BookForGroups book = new BookForGroups();
-        BookDescriptionForGroups bookDescription = new BookDescriptionForGroups();
-        Document document = Jsoup.connect(urlSource).get();
-        Element productLeftColumn = document.selectFirst("#product-left-column");
-        assert productLeftColumn != null;
-        Element productInfo = productLeftColumn.selectFirst(productInfoCss);
-        if (productInfo != null) {
-            String bookId = productInfo.attr(productIdAttr);
-            String isbnString = productInfo.select(productIsbnCss).text().replace("ISBN: ", "");
-            bookDescription.setBookId(bookId);
-            String[] arrayOfIsbns = isbnString.split(",");
-            for (int i = 0; i < arrayOfIsbns.length; i++) {
-                if (i == 0) {
-                    arrayOfIsbns[i] = arrayOfIsbns[i].replace("все", "");
-                }
-                if (i == arrayOfIsbns.length - 1) {
-                    arrayOfIsbns[i] = arrayOfIsbns[i].replace("скрыть", "");
-                }
-                arrayOfIsbns[i] = arrayOfIsbns[i].replace("-", "").trim();
+    private BookDescriptionForGroups setDescriptionForSeriesBook(Element productInfo) {
+        String bookId = productInfo.attr(productIdAttr);
+        String isbnString = productInfo.select(productIsbnCss).text().replace("ISBN: ", "");
+        String[] arrayOfIsbns = isbnString.split(",");
+        for (int i = 0; i < arrayOfIsbns.length; i++) {
+            if (i == 0) {
+                arrayOfIsbns[i] = arrayOfIsbns[i].replace("все", "");
             }
-            ArrayList<String> isbns = new ArrayList<>(Arrays.asList(arrayOfIsbns));
-            bookDescription.setIsbns(isbns);
-            book.setBookDescriptionForGroups(bookDescription);
-        } else {
-            System.out.println("Product information not found.");
+            if (i == arrayOfIsbns.length - 1) {
+                arrayOfIsbns[i] = arrayOfIsbns[i].replace("скрыть", "");
+            }
+            arrayOfIsbns[i] = arrayOfIsbns[i].replace("-", "").trim();
         }
-        return book;
+        ArrayList<String> isbns = new ArrayList<>(Arrays.asList(arrayOfIsbns));
+        return new BookDescriptionForGroups(bookId, isbns);
     }
 
     public void addRelatedBooks(GroupTypes group, List<String> relatedBooksUrls, int limit) throws IOException {
@@ -120,7 +122,7 @@ public class HtmlParser extends BaseAbstractPage {
             } catch (Exception e) {
                 continue;
             }
-            BookForGroups book = parser.createBookForGroupsData();
+            BookForGroups book = parser.createBookData(BookForGroups.class);
             books.add(book);
         }
         setRelatedBooksForBook(String.valueOf(group), books);

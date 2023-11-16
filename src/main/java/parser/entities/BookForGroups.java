@@ -7,6 +7,16 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class BookForGroups {
+public class BookForGroups implements BookInterface {
     private BookDescriptionForGroups bookDescriptionForGroups;
+
+    @Override
+    public void initializeRelatedBook(BookDescriptionForGroups bookDescriptionForGroups) {
+        this.bookDescriptionForGroups = bookDescriptionForGroups;
+    }
+
+    @Override
+    public void initializeMainBook(BookDescription bookDescription) {
+
+    }
 }
