@@ -13,14 +13,12 @@ import java.util.List;
 public class SearchBookByIsbnFeature extends BaseAbstractPage {
     private final IndexPage INDEX_PAGE;
     private final SearchPage SEARCH_PAGE;
-    private final BookPage BOOK_PAGE;
     private final Cookies COOKIES;
 
     public SearchBookByIsbnFeature() throws MalformedURLException, URISyntaxException {
         driver = new SeleniumDriver();
         this.INDEX_PAGE = new IndexPage();
         this.SEARCH_PAGE = new SearchPage();
-        this.BOOK_PAGE = new BookPage();
         this.COOKIES = new Cookies();
     }
 
@@ -32,6 +30,9 @@ public class SearchBookByIsbnFeature extends BaseAbstractPage {
         driver.sleepForSomeTime(1);
         return driver.getDriver().getCurrentUrl();
     }
+
+    //in case you need to get some info (book availability) you need to split the method provideIsbnAndGoToBookPage()
+    // into 2 methods. Search a book, get some info and then continueAndGoToBookPage()
 
     public String continueAndGoToBookPage() {
         SEARCH_PAGE.clickBookCard();
@@ -49,41 +50,5 @@ public class SearchBookByIsbnFeature extends BaseAbstractPage {
             return false;
         }
         return false;
-    }
-
-    public void addRelatedBooks(GroupTypes group, List<String> relatedBooksUrls, int limit) throws IOException {
-        ArrayList<BookForGroups> books = new ArrayList<>();
-        for (int i = 0; i < limit; i++) {
-            if (relatedBooksUrls == null) {
-                break;
-            }
-            HtmlParser parser = new HtmlParser(relatedBooksUrls.get(i), Main.webPageUrl);
-            driver.getDriver().get(relatedBooksUrls.get(i));
-            try {
-                driver.getShortWait10().pollingEvery(Duration.ofMillis(500)).until(ExpectedConditions.urlContains(relatedBooksUrls.get(i).substring(20)));
-            } catch (Exception e) {
-                continue;
-            }
-            BookForGroups book = parser.createBookForGroupsData();
-            books.add(book);
-        }
-        setRelatedBooksForBook(String.valueOf(group), books);
-    }
-
-    private void setRelatedBooksForBook(String group, ArrayList<BookForGroups> relatedBooks) {
-        switch (group) {
-            case "SERIES": {
-                Main.book.setBooksOfSeries(relatedBooks);
-                break;
-            }
-            case "AUTHORS": {
-                Main.book.setBooksOfAuthor(relatedBooks);
-                break;
-            }
-            case "GENRE": {
-                Main.book.setBooksOfGenre(relatedBooks);
-                break;
-            }
-        }
     }
 }

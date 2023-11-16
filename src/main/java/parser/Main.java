@@ -17,7 +17,7 @@ public class Main {
     public static void main(String[] args) throws IOException, URISyntaxException {
         String isbn = args[0];
         int limitOfRelatedBooks = Integer.parseInt(args[1]);
-        String jarPath = "";
+        String jarPath;
          try {
             File jarFile = new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI());
             jarPath = jarFile.getParent();
@@ -33,9 +33,9 @@ public class Main {
             List<String> seriesBooks = htmlParser.getBooksForNthElementsOfSection(seriesUrl);
             List<String> authorsBooks = htmlParser.getBooksForNthElementsOfSection(authorsUrl);
             List<String> genresBooks = htmlParser.getBooksForNthElementsOfSection(genresUrl);
-            searchBookByIsbnFeature.addRelatedBooks(GroupTypes.SERIES, seriesBooks, limitOfRelatedBooks);
-            searchBookByIsbnFeature.addRelatedBooks(GroupTypes.AUTHORS, authorsBooks, limitOfRelatedBooks);
-            searchBookByIsbnFeature.addRelatedBooks(GroupTypes.GENRE, genresBooks, limitOfRelatedBooks);
+            htmlParser.addRelatedBooks(GroupTypes.SERIES, seriesBooks, limitOfRelatedBooks);
+            htmlParser.addRelatedBooks(GroupTypes.AUTHORS, authorsBooks, limitOfRelatedBooks);
+            htmlParser.addRelatedBooks(GroupTypes.GENRE, genresBooks, limitOfRelatedBooks);
             SearchBookByIsbnFeature.driver.closeDriver();
             jsonWriter.writeBookToFile(book);
         } catch (URISyntaxException e) {

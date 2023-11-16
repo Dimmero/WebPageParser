@@ -14,4 +14,5 @@ public class Book {
     private ArrayList<BookForGroups> booksOfAuthor;
     private ArrayList<BookForGroups> booksOfSeries;
     private ArrayList<BookForGroups> booksOfGenre;
+
 }

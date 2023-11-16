@@ -3,6 +3,7 @@ package parser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import parser.entities.Book;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -17,10 +18,6 @@ public class JsonWriter {
         this.file = new File(pathJar);
         this.booksList = new ArrayList<>();
         this.objectMapper = new ObjectMapper();
-    }
-
-    public List<Book> getBooksList() {
-        return booksList;
     }
 
     private void fetchBooksFromFile() {
