@@ -14,7 +14,7 @@ public class JsonWriter {
     private final ObjectMapper objectMapper;
 
     public JsonWriter(String pathJar) {
-        this.file = new File(pathJar + "books.json");
+        this.file = new File(pathJar + "/books.json");
         this.booksList = new ArrayList<>();
         this.objectMapper = new ObjectMapper();
     }
