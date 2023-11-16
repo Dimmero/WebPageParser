@@ -51,16 +51,16 @@ public class SearchBookByIsbnFeature extends BaseAbstractPage {
         return false;
     }
 
-    public void addRelatedBooks(GroupTypes group, List<String> hrefs, int limit) throws IOException {
+    public void addRelatedBooks(GroupTypes group, List<String> relatedBooksUrls, int limit) throws IOException {
         ArrayList<BookForGroups> books = new ArrayList<>();
         for (int i = 0; i < limit; i++) {
-            if (hrefs == null) {
+            if (relatedBooksUrls == null) {
                 break;
             }
-            HtmlParser parser = new HtmlParser(hrefs.get(i), Main.webPageUrl);
-            driver.getDriver().get(hrefs.get(i));
+            HtmlParser parser = new HtmlParser(relatedBooksUrls.get(i), Main.webPageUrl);
+            driver.getDriver().get(relatedBooksUrls.get(i));
             try {
-                driver.getShortWait10().pollingEvery(Duration.ofMillis(500)).until(ExpectedConditions.urlContains(hrefs.get(i).substring(20)));
+                driver.getShortWait10().pollingEvery(Duration.ofMillis(500)).until(ExpectedConditions.urlContains(relatedBooksUrls.get(i).substring(20)));
             } catch (Exception e) {
                 continue;
             }

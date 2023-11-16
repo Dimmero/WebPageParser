@@ -99,37 +99,35 @@ public class HtmlParser extends BaseAbstractPage {
         return book;
     }
 
-    public List<String> getBooksForNthElementsOfSection(List<String> hrefs, int element) {
-        List<String> sectionHrefs = null;
-        for (int i = 0; i < element; i++) {
-            if (hrefs.size() == 0) {
-                return null;
-            }
-            driver.getDriver().get(hrefs.get(i));
-            driver.getShortWait10().until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.tagName("html")));
-            String html = driver.getDriver().getPageSource();
-            Document document = Jsoup.parse(html);
-            Elements sectionSectionElements = document.select("a.cover");
-            sectionHrefs = extractHrefsOfSection(sectionSectionElements);
+    public List<String> getBooksForNthElementsOfSection(String sectionUrl) {
+        List<String> sectionUrls;
+        if (sectionUrl.isBlank()) {
+            return null;
         }
-        assert sectionHrefs != null;
-        return new ArrayList<>(sectionHrefs);
+        driver.getDriver().get(sectionUrl);
+        driver.getShortWait10().until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.tagName("html")));
+        String html = driver.getDriver().getPageSource();
+        Document document = Jsoup.parse(html);
+        Elements sectionSectionElements = document.select("a.cover");
+        sectionUrls = extractUrlOfSection(sectionSectionElements);
+        return new ArrayList<>(sectionUrls);
     }
 
-    public ArrayList<String> getSectionHrefs(GroupTypes section, String url) throws IOException {
+    public String getSectionUrl(GroupTypes section, String url) throws IOException {
         driver.getDriver().get(url);
         Document document = Jsoup.connect(url).get();
-        Elements sectionHrefs = null;
+        String urlOfSection = "";
         try {
-            sectionHrefs = document.select("." + section.name().toLowerCase()).select("a");
+            Element sectionUrl = Objects.requireNonNull(document.selectFirst("." + section.name().toLowerCase())).selectFirst("a");
+            assert sectionUrl != null;
+            urlOfSection = this.webPageUrl + sectionUrl.attr("href");
         } catch (Exception e) {
-            e.printStackTrace();
+            e.getStackTrace();
         }
-        assert sectionHrefs != null;
-        return new ArrayList<>(extractHrefsOfSection(sectionHrefs));
+        return urlOfSection;
     }
 
-    private ArrayList<String> extractHrefsOfSection(Elements section) {
+    private ArrayList<String> extractUrlOfSection(Elements section) {
         ArrayList<String> arr = new ArrayList<>();
         for (Element el : section) {
             String href = el.attr("href");

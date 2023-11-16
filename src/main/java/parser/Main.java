@@ -10,33 +10,32 @@ import java.util.List;
 
 public class Main {
     public static Book book = new Book();
-    public static String webPageUrl;
+    public static String FILE_NAME_PATH = "/books.json";
+    public static String LOGS_PATH = "/logs";
+    public static String webPageUrl = System.getenv("PARSE_SERVICE");
 
     public static void main(String[] args) throws IOException, URISyntaxException {
         String isbn = args[0];
-        webPageUrl = System.getenv("PARSE_SERVICE");
+        int limitOfRelatedBooks = Integer.parseInt(args[1]);
         String jarPath = "";
          try {
             File jarFile = new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI());
             jarPath = jarFile.getParent();
-            JsonWriter jsonWriter = new JsonWriter(jarPath);
-            String logDirectoryPath = jarPath + "/logs";
-            deleteLogFiles(logDirectoryPath);
+            JsonWriter jsonWriter = new JsonWriter(jarPath + FILE_NAME_PATH);
+            deleteLogFiles(jarPath + LOGS_PATH);
             SearchBookByIsbnFeature searchBookByIsbnFeature = new SearchBookByIsbnFeature();
-//        JsonWriter jsonWriter = new JsonWriter("");
-//        String url = searchBookByIsbnFeature.provideIsbnAndGoToBookPage("9785090648264");
-            String url = searchBookByIsbnFeature.provideIsbnAndGoToBookPage(isbn, webPageUrl);
-            HtmlParser htmlParser = new HtmlParser(url, webPageUrl);
+            String mainBookUrl = searchBookByIsbnFeature.provideIsbnAndGoToBookPage(isbn, webPageUrl);
+            HtmlParser htmlParser = new HtmlParser(mainBookUrl, webPageUrl);
             book = htmlParser.createBookData();
-            ArrayList<String> seriesHrefs = htmlParser.getSectionHrefs(GroupTypes.SERIES, url);
-            ArrayList<String> authorsHrefs = htmlParser.getSectionHrefs(GroupTypes.AUTHORS, url);
-            ArrayList<String> genresHrefs = htmlParser.getSectionHrefs(GroupTypes.GENRE, url);
-            List<String> seriesBooks = htmlParser.getBooksForNthElementsOfSection(seriesHrefs, 1);
-            List<String> authorsBooks = htmlParser.getBooksForNthElementsOfSection(authorsHrefs, 1);
-            List<String> genresBooks = htmlParser.getBooksForNthElementsOfSection(genresHrefs, 1);
-            searchBookByIsbnFeature.addRelatedBooks(GroupTypes.SERIES, seriesBooks, 3);
-            searchBookByIsbnFeature.addRelatedBooks(GroupTypes.AUTHORS, authorsBooks, 3);
-            searchBookByIsbnFeature.addRelatedBooks(GroupTypes.GENRE, genresBooks, 3);
+            String seriesUrl = htmlParser.getSectionUrl(GroupTypes.SERIES, mainBookUrl);
+            String authorsUrl = htmlParser.getSectionUrl(GroupTypes.AUTHORS, mainBookUrl);
+            String genresUrl = htmlParser.getSectionUrl(GroupTypes.GENRE, mainBookUrl);
+            List<String> seriesBooks = htmlParser.getBooksForNthElementsOfSection(seriesUrl);
+            List<String> authorsBooks = htmlParser.getBooksForNthElementsOfSection(authorsUrl);
+            List<String> genresBooks = htmlParser.getBooksForNthElementsOfSection(genresUrl);
+            searchBookByIsbnFeature.addRelatedBooks(GroupTypes.SERIES, seriesBooks, limitOfRelatedBooks);
+            searchBookByIsbnFeature.addRelatedBooks(GroupTypes.AUTHORS, authorsBooks, limitOfRelatedBooks);
+            searchBookByIsbnFeature.addRelatedBooks(GroupTypes.GENRE, genresBooks, limitOfRelatedBooks);
             SearchBookByIsbnFeature.driver.closeDriver();
             jsonWriter.writeBookToFile(book);
         } catch (URISyntaxException e) {

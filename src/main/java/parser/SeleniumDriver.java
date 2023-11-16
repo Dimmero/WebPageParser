@@ -1,5 +1,6 @@
 package parser;
 
+import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
@@ -18,9 +19,9 @@ import java.util.logging.Logger;
 public class SeleniumDriver {
     private RemoteWebDriver driver;
     private final WebDriverWait shortWait10;
-    private String seleniumHost;
-    private String seleniumPort;
-    private String seleniumPath;
+    private final String seleniumHost = System.getenv("SELENIUM_HOST");
+    private final String seleniumPort = System.getenv("SELENIUM_PORT");
+    private final String seleniumPath = System.getenv("SELENIUM_PATH");
 
     public SeleniumDriver() throws MalformedURLException, URISyntaxException {
         runChromeDriver();
@@ -36,19 +37,17 @@ public class SeleniumDriver {
     }
 
     public void runChromeDriver() throws MalformedURLException, URISyntaxException {
+//        System.setProperty("web.driver.chrome", "usr/local/bin");
         Logger.getLogger("org.openqa.selenium").setLevel(Level.INFO);
         ChromeOptions chromeOptions = getChromeOptions();
-        seleniumHost = System.getenv("SELENIUM_HOST");
-        seleniumPort = System.getenv("SELENIUM_PORT");
-        seleniumPath = System.getenv("SELENIUM_PATH");
         URL urlHost = new URI("http://" + seleniumHost + ":" + seleniumPort + seleniumPath).toURL();
-        System.out.println(urlHost);
         driver = new RemoteWebDriver(
                 urlHost, chromeOptions, false
         );
         String sessionId = driver.getSessionId().toString();
         System.out.println(sessionId);
-        System.out.println("FUCK YEAH!!!!");
+//        driver = new ChromeDriver(getChromeOptions());
+        System.out.println("REMOTE DRIVER HAS BEEN SUCCESSFULLY STARTED!");
     }
 
     private ChromeOptions getChromeOptions() {
