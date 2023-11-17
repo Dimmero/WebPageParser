@@ -109,11 +109,14 @@ public class HtmlParser extends BaseAbstractPage {
         return new BookDescriptionForGroups(bookId, isbns);
     }
 
-    public void addRelatedBooks(GroupTypes group, List<String> relatedBooksUrls, int limit) throws IOException {
+    public void addRelatedBooks(GroupTypes group, List<String> relatedBooksUrls, int limit) {
         ArrayList<BookForGroups> books = new ArrayList<>();
         for (int i = 0; i < limit; i++) {
             if (relatedBooksUrls == null) {
                 break;
+            }
+            if (relatedBooksUrls.size() < limit) {
+                limit = relatedBooksUrls.size();
             }
             HtmlParser parser = new HtmlParser(relatedBooksUrls.get(i), Main.webPageUrl);
             driver.getDriver().get(relatedBooksUrls.get(i));
