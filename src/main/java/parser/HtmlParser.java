@@ -166,8 +166,14 @@ public class HtmlParser extends BaseAbstractPage {
         driver.getDriver().get(url);
         Document document = Jsoup.connect(url).get();
         String urlOfSection = "";
+        String sectionName = section.name().toLowerCase();
+        Element sectionUrl;
         try {
-            Element sectionUrl = Objects.requireNonNull(document.selectFirst("." + section.name().toLowerCase())).selectFirst("a");
+            if (section.equals(GroupTypes.GENRE)) {
+                sectionUrl = Objects.requireNonNull(document.selectFirst("." + "thermo-item_last")).selectFirst("a");
+            } else {
+                sectionUrl = Objects.requireNonNull(document.selectFirst("." + sectionName)).selectFirst("a");
+            }
             assert sectionUrl != null;
             urlOfSection = this.webPageUrl + sectionUrl.attr("href");
         } catch (Exception e) {
