@@ -19,7 +19,6 @@ import java.util.Objects;
 
 public class HtmlParser extends BaseAbstractPage {
     private final String urlSource;
-    private final String webPageUrl;
     private final String productInfoCss = "#product-info";
     private final String productImageCss = "#product-image";
     private final String productAuthorsCss = ".authors";
@@ -31,32 +30,22 @@ public class HtmlParser extends BaseAbstractPage {
     private final String productImageAttr = "img";
     private final String productImageSrcAttr = "data-src";
     private final String elementOfSection = "a.cover";
+    private final String productAnnotationCss = "#product-about";
 
-    public HtmlParser(String urlSource, String webPageUrl) {
+    public HtmlParser(String urlSource) {
         this.urlSource = urlSource;
-        this.webPageUrl = webPageUrl;
     }
 
     public <T extends BookInterface> T createBookData(Class<T> bookType) {
         try {
             T book = bookType.getDeclaredConstructor().newInstance();
             Document document = Jsoup.connect(urlSource).get();
-            Element productInfo = document.selectFirst(this.productInfoCss);
             if (bookType.getName().equals(Book.class.getName())) {
-                Element productImage = document.selectFirst(this.productImageCss);
-                try {
-                    if (productInfo != null && productImage != null) {
-                        BookDescription bookDescription = setDescriptionForMainBook(productInfo, productImage);
-                        book.initializeMainBook(bookDescription);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                BookDescription bookDescription = setDescriptionForBook(document, BookDescription.class);
+                book.initializeMainBook(bookDescription);
             } else {
-                if (productInfo != null) {
-                    BookDescriptionForGroups bookDescriptionForGroups = setDescriptionForSeriesBook(productInfo);
-                    book.initializeRelatedBook(bookDescriptionForGroups);
-                }
+                BookDescriptionForGroups bookDescriptionForGroups = setDescriptionForBook(document, BookDescriptionForGroups.class);
+                book.initializeRelatedBook(bookDescriptionForGroups);
             }
             return book;
         } catch (IOException | NoSuchMethodException e) {
@@ -67,15 +56,12 @@ public class HtmlParser extends BaseAbstractPage {
         return null;
     }
 
-    private BookDescription setDescriptionForMainBook(Element productInfo, Element productImage) {
-        String author = productInfo.select(productAuthorsCss).text().replace("Автор: ", "");
-        String title = productInfo.attr(productTitleAttr);
-        String publisher = productInfo.attr(productPublisherAttr);
-        String series = productInfo.attr(productSeriesAttr);
+    private <T extends BookDescriptionInterface> T setDescriptionForBook(Document document, Class<T> descriptionType) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+        T bookDescription = descriptionType.getDeclaredConstructor().newInstance();
+        Element productInfo = document.selectFirst(this.productInfoCss);
+        assert productInfo != null;
         String bookId = productInfo.attr(productIdAttr);
         String isbnString = productInfo.select(productIsbnCss).text().replace("ISBN: ", "");
-        assert productImage != null;
-        String image = Objects.requireNonNull(productImage.selectFirst(productImageAttr)).attr(productImageSrcAttr);
         ArrayList<String> images = new ArrayList<>();
         String[] arrayOfIsbns = isbnString.split(",");
         for (int i = 0; i < arrayOfIsbns.length; i++) {
@@ -88,25 +74,22 @@ public class HtmlParser extends BaseAbstractPage {
             arrayOfIsbns[i] = arrayOfIsbns[i].replace("-", "").trim();
         }
         ArrayList<String> isbns = new ArrayList<>(Arrays.asList(arrayOfIsbns));
-        images.add(image);
-        return new BookDescription(author, title, publisher, series, bookId, isbns, images);
-    }
-
-    private BookDescriptionForGroups setDescriptionForSeriesBook(Element productInfo) {
-        String bookId = productInfo.attr(productIdAttr);
-        String isbnString = productInfo.select(productIsbnCss).text().replace("ISBN: ", "");
-        String[] arrayOfIsbns = isbnString.split(",");
-        for (int i = 0; i < arrayOfIsbns.length; i++) {
-            if (i == 0) {
-                arrayOfIsbns[i] = arrayOfIsbns[i].replace("все", "");
-            }
-            if (i == arrayOfIsbns.length - 1) {
-                arrayOfIsbns[i] = arrayOfIsbns[i].replace("скрыть", "");
-            }
-            arrayOfIsbns[i] = arrayOfIsbns[i].replace("-", "").trim();
+        String image;
+        if (descriptionType.getName().equals(BookDescription.class.getName())) {
+            String author = productInfo.select(productAuthorsCss).text().replace("Автор: ", "");
+            String title = productInfo.attr(productTitleAttr);
+            String annotation = document.select(productAnnotationCss).select("p").text();
+            String publisher = productInfo.attr(productPublisherAttr);
+            String series = productInfo.attr(productSeriesAttr);
+            Element productImage = document.selectFirst(this.productImageCss);
+            assert productImage != null;
+            image = Objects.requireNonNull(productImage.selectFirst(productImageAttr)).attr(productImageSrcAttr);
+            images.add(image);
+            bookDescription.initializeDescriptionForMainBook(author, title, annotation, publisher, series, bookId, isbns, images);
+        } else {
+            bookDescription.initializeDescriptionForSectionGroup(bookId, isbns);
         }
-        ArrayList<String> isbns = new ArrayList<>(Arrays.asList(arrayOfIsbns));
-        return new BookDescriptionForGroups(bookId, isbns);
+        return bookDescription;
     }
 
     public void addRelatedBooks(GroupTypes group, List<String> relatedBooksUrls, int limit) {
@@ -118,7 +101,7 @@ public class HtmlParser extends BaseAbstractPage {
             if (relatedBooksUrls.size() < limit) {
                 limit = relatedBooksUrls.size();
             }
-            HtmlParser parser = new HtmlParser(relatedBooksUrls.get(i), Main.webPageUrl);
+            HtmlParser parser = new HtmlParser(relatedBooksUrls.get(i));
             driver.getDriver().get(relatedBooksUrls.get(i));
             try {
                 driver.getShortWait10().pollingEvery(Duration.ofMillis(500)).until(ExpectedConditions.urlContains(relatedBooksUrls.get(i).substring(20)));
@@ -175,7 +158,7 @@ public class HtmlParser extends BaseAbstractPage {
                 sectionUrl = Objects.requireNonNull(document.selectFirst("." + sectionName)).selectFirst("a");
             }
             assert sectionUrl != null;
-            urlOfSection = this.webPageUrl + sectionUrl.attr("href");
+            urlOfSection = Main.webPageUrl + sectionUrl.attr("href");
         } catch (Exception e) {
             e.getStackTrace();
         }
@@ -186,7 +169,7 @@ public class HtmlParser extends BaseAbstractPage {
         ArrayList<String> arr = new ArrayList<>();
         for (Element el : section) {
             String href = el.attr("href");
-            arr.add(this.webPageUrl + href);
+            arr.add(Main.webPageUrl + href);
         }
         return new ArrayList<>(arr);
     }

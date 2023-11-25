@@ -24,7 +24,7 @@ public class Main {
             deleteLogFiles(jarPath + LOGS_PATH);
             SearchBookByIsbnFeature searchBookByIsbnFeature = new SearchBookByIsbnFeature();
             String mainBookUrl = searchBookByIsbnFeature.provideIsbnAndGoToBookPage(isbn, webPageUrl);
-            HtmlParser htmlParser = new HtmlParser(mainBookUrl, webPageUrl);
+            HtmlParser htmlParser = new HtmlParser(mainBookUrl);
             book = htmlParser.createBookData(Book.class);
             String seriesUrl = htmlParser.getSectionUrl(GroupTypes.SERIES, mainBookUrl);
             String authorsUrl = htmlParser.getSectionUrl(GroupTypes.AUTHORS, mainBookUrl);
@@ -40,7 +40,6 @@ public class Main {
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
-
     }
 
     private static void deleteLogFiles(String directoryPath) {

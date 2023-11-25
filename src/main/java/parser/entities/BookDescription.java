@@ -8,9 +8,10 @@ import java.util.ArrayList;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class BookDescription {
+public class BookDescription implements BookDescriptionInterface {
     private String author;
     private String title;
+    private String annotation;
     private String publisher;
     private String series;
     private String bookId;
@@ -28,5 +29,21 @@ public class BookDescription {
                 "isbn:" + isbns + "\n" +
                 "images:" + images + "\n" +
                 "}";
+    }
+
+    @Override
+    public void initializeDescriptionForMainBook(String author, String title, String annotation, String publisher, String series, String bookId, ArrayList<String> isbns, ArrayList<String> images) {
+        setAuthor(author);
+        setTitle(title);
+        setAnnotation(annotation);
+        setPublisher(publisher);
+        setSeries(series);
+        setBookId(bookId);
+        setIsbns(isbns);
+        setImages(images);
+    }
+
+    @Override
+    public void initializeDescriptionForSectionGroup(String bookId, ArrayList<String> isbns) {
     }
 }
