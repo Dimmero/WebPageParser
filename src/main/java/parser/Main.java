@@ -1,17 +1,19 @@
 package parser;
 
 import parser.entities.Book;
-
+import parser.entities.BookDescription;
+import parser.entities.BookDescriptionInterface;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
 
 public class Main {
-    public static Book book = new Book();
+    public static Book<BookDescriptionInterface> book = new Book<>();
     public static String FILE_NAME_PATH = "/books.json";
     public static String LOGS_PATH = "/logs";
     public static String webPageUrl = System.getenv("PARSE_SERVICE");
+    public static HtmlParser htmlParser = new HtmlParser();
 
     public static void main(String[] args) throws IOException, URISyntaxException {
         String isbn = args[0];
@@ -24,8 +26,7 @@ public class Main {
             deleteLogFiles(jarPath + LOGS_PATH);
             SearchBookByIsbnFeature searchBookByIsbnFeature = new SearchBookByIsbnFeature();
             String mainBookUrl = searchBookByIsbnFeature.provideIsbnAndGoToBookPage(isbn, webPageUrl);
-            HtmlParser htmlParser = new HtmlParser(mainBookUrl);
-            book = htmlParser.createBookData(Book.class);
+            book = htmlParser.createBookData(Book.class, BookDescription.class, mainBookUrl);
             String seriesUrl = htmlParser.getSectionUrl(GroupTypes.SERIES, mainBookUrl);
             String authorsUrl = htmlParser.getSectionUrl(GroupTypes.AUTHORS, mainBookUrl);
             String genresUrl = htmlParser.getSectionUrl(GroupTypes.GENRE, mainBookUrl);

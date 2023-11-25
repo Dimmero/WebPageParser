@@ -1,8 +1,5 @@
 package parser.entities;
 
-public interface BookInterface {
-    void initializeRelatedBook(BookDescriptionForGroups bookDescriptionForGroups);
-
-    void initializeMainBook(BookDescription bookDescription);
-
+public interface BookInterface<T extends BookDescriptionInterface> {
+    void initializeBook(T bookDescription);
 }

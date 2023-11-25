@@ -11,14 +11,12 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
 public class HtmlParser extends BaseAbstractPage {
-    private final String urlSource;
     private final String productInfoCss = "#product-info";
     private final String productImageCss = "#product-image";
     private final String productAuthorsCss = ".authors";
@@ -32,21 +30,13 @@ public class HtmlParser extends BaseAbstractPage {
     private final String elementOfSection = "a.cover";
     private final String productAnnotationCss = "#product-about";
 
-    public HtmlParser(String urlSource) {
-        this.urlSource = urlSource;
-    }
-
-    public <T extends BookInterface> T createBookData(Class<T> bookType) {
+    public <T extends BookInterface<R>, R extends BookDescriptionInterface> T createBookData(Class<T> bookType, Class<R> bookDescriptionType, String urlSource) {
         try {
+            driver.getDriver().get(urlSource);
             T book = bookType.getDeclaredConstructor().newInstance();
             Document document = Jsoup.connect(urlSource).get();
-            if (bookType.getName().equals(Book.class.getName())) {
-                BookDescription bookDescription = setDescriptionForBook(document, BookDescription.class);
-                book.initializeMainBook(bookDescription);
-            } else {
-                BookDescriptionForGroups bookDescriptionForGroups = setDescriptionForBook(document, BookDescriptionForGroups.class);
-                book.initializeRelatedBook(bookDescriptionForGroups);
-            }
+            R bookDescription = setDescriptionForBook(document, bookDescriptionType);
+            book.initializeBook(bookDescription);
             return book;
         } catch (IOException | NoSuchMethodException e) {
             e.getStackTrace();
@@ -93,7 +83,7 @@ public class HtmlParser extends BaseAbstractPage {
     }
 
     public void addRelatedBooks(GroupTypes group, List<String> relatedBooksUrls, int limit) {
-        ArrayList<BookForGroups> books = new ArrayList<>();
+        ArrayList<BookForGroups<BookDescriptionForGroups>> books = new ArrayList<>();
         for (int i = 0; i < limit; i++) {
             if (relatedBooksUrls == null) {
                 break;
@@ -101,20 +91,14 @@ public class HtmlParser extends BaseAbstractPage {
             if (relatedBooksUrls.size() < limit) {
                 limit = relatedBooksUrls.size();
             }
-            HtmlParser parser = new HtmlParser(relatedBooksUrls.get(i));
-            driver.getDriver().get(relatedBooksUrls.get(i));
-            try {
-                driver.getShortWait10().pollingEvery(Duration.ofMillis(500)).until(ExpectedConditions.urlContains(relatedBooksUrls.get(i).substring(20)));
-            } catch (Exception e) {
-                continue;
-            }
-            BookForGroups book = parser.createBookData(BookForGroups.class);
+            String sourceUrl = relatedBooksUrls.get(i);
+            BookForGroups<BookDescriptionForGroups> book = Main.htmlParser.createBookData(BookForGroups.class, BookDescriptionForGroups.class, sourceUrl);
             books.add(book);
         }
         setRelatedBooksForBook(String.valueOf(group), books);
     }
 
-    private void setRelatedBooksForBook(String group, ArrayList<BookForGroups> relatedBooks) {
+    private void setRelatedBooksForBook(String group, ArrayList<BookForGroups<BookDescriptionForGroups>> relatedBooks) {
         switch (group) {
             case "SERIES": {
                 Main.book.setBooksOfSeries(relatedBooks);
