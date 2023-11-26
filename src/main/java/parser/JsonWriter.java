@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import parser.entities.Book;
 import parser.entities.BookDescription;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;

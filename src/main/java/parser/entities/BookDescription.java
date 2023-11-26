@@ -9,7 +9,7 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BookDescription implements BookDescriptionInterface {
-    private String author;
+    private ArrayList<String> authors;
     private String title;
     private String annotation;
     private String publisher;
@@ -20,7 +20,7 @@ public class BookDescription implements BookDescriptionInterface {
 
     @Override
     public void initializeDescriptionForBook(Map<String, Object> attributes) {
-        setAuthor((String) attributes.get("author"));
+        setAuthors((ArrayList<String>) attributes.get("authors"));
         setTitle((String) attributes.get("title"));
         setAnnotation((String) attributes.get("annotation"));
         setPublisher((String) attributes.get("publisher"));

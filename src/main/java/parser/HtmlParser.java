@@ -14,18 +14,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 public class HtmlParser extends BaseAbstractPage {
-    private final String productInfoCss = "#product-info";
-    private final String productImageCss = "#product-image";
-    private final String productAuthorsCss = ".authors";
-    private final String productTitleAttr = "data-name";
-    private final String productPublisherAttr = "data-pubhouse";
-    private final String productSeriesAttr = "data-series";
-    private final String productIdAttr = "data-product-id";
-    private final String productIsbnCss = ".isbn";
-    private final String productImageAttr = "img";
-    private final String productImageSrcAttr = "data-src";
-    private final String elementOfSection = "a.cover";
-    private final String productAnnotationCss = "#product-about";
 
     public <T extends BookInterface<R>, R extends BookDescriptionInterface> T createBookData(Class<T> bookType, Class<R> bookDescriptionType, String urlSource) {
         try {
@@ -46,24 +34,27 @@ public class HtmlParser extends BaseAbstractPage {
     private <T extends BookDescriptionInterface> T setDescriptionForBook(Document document, Class<T> descriptionType) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         Map<String, Object> bookData = new HashMap<>();
         T bookDescription = descriptionType.getDeclaredConstructor().newInstance();
-        Element productInfo = document.selectFirst(this.productInfoCss);
+        Element productInfo = document.selectFirst("#product-info");
         assert productInfo != null;
-        String bookId = productInfo.attr(productIdAttr);
-        String isbnString = productInfo.select(productIsbnCss).text().replace("ISBN: ", "");
+        String bookId = productInfo.attr("data-product-id");
+        String isbnString = productInfo.select(".isbn").text().replace("ISBN: ", "");
         ArrayList<String> images = new ArrayList<>();
         ArrayList<String> isbns = getArrayOfIsbns(isbnString);
-        String image;
-        String author = Objects.requireNonNull(productInfo.selectFirst(productAuthorsCss)).text().replace("Автор: ", "");
-        String title = productInfo.attr(productTitleAttr);
-        String annotation = document.select(productAnnotationCss).select("p").text();
-        String publisher = productInfo.attr(productPublisherAttr);
-        String series = productInfo.attr(productSeriesAttr);
-        Element productImage = document.selectFirst(this.productImageCss);
+        String authorsString = Objects.requireNonNull(productInfo.selectFirst(".authors")).text().replace("Автор: ", "");
+        String[] arrayOfAuthors = authorsString.split(",");
+        ArrayList<String> authors = new ArrayList<>(Arrays.asList(arrayOfAuthors));
+        String title = productInfo.attr("data-name");
+        String annotation = document.select("#product-about").select("p").text();
+        String publisher = productInfo.attr("data-pubhouse");
+        String series = productInfo.attr("data-series");
+        Element productImage = document.selectFirst("#product-image");
         assert productImage != null;
-        image = Objects.requireNonNull(productImage.selectFirst(productImageAttr)).attr(productImageSrcAttr);
-        images.add(image);
+        Elements imagesElements = productImage.select("img");
+        for (Element elImg : imagesElements) {
+            images.add(elImg.attr("src"));
+        }
         bookData.put("bookId", bookId);
-        bookData.put("author", author);
+        bookData.put("author", authors);
         bookData.put("title", title);
         bookData.put("annotation", annotation);
         bookData.put("publisher", publisher);
@@ -116,6 +107,7 @@ public class HtmlParser extends BaseAbstractPage {
         driver.getShortWait10().until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.tagName("html")));
         String html = driver.getDriver().getPageSource();
         Document document = Jsoup.parse(html);
+        String elementOfSection = "a.cover";
         Elements sectionElements = document.select(elementOfSection);
         sectionUrls = extractUrlOfSection(sectionElements);
         return new ArrayList<>(sectionUrls);
