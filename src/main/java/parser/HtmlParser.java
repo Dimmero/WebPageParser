@@ -54,7 +54,7 @@ public class HtmlParser extends BaseAbstractPage {
             images.add(elImg.attr("src"));
         }
         bookData.put("bookId", bookId);
-        bookData.put("author", authors);
+        bookData.put("authors", authors);
         bookData.put("title", title);
         bookData.put("annotation", annotation);
         bookData.put("publisher", publisher);
