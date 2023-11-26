@@ -8,7 +8,7 @@ import java.util.ArrayList;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class Book<T extends BookDescriptionInterface> implements BookInterface<T> {
+public class Book<T extends BookDescription> implements BookInterface<T> {
     private T bookDescription;
     private ArrayList<BookForGroups<BookDescriptionForGroups>> booksOfAuthor;
     private ArrayList<BookForGroups<BookDescriptionForGroups>> booksOfSeries;

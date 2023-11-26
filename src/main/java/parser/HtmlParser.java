@@ -11,10 +11,7 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class HtmlParser extends BaseAbstractPage {
     private final String productInfoCss = "#product-info";
@@ -47,6 +44,7 @@ public class HtmlParser extends BaseAbstractPage {
     }
 
     private <T extends BookDescriptionInterface> T setDescriptionForBook(Document document, Class<T> descriptionType) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+        Map<String, Object> bookData = new HashMap<>();
         T bookDescription = descriptionType.getDeclaredConstructor().newInstance();
         Element productInfo = document.selectFirst(this.productInfoCss);
         assert productInfo != null;
@@ -65,20 +63,24 @@ public class HtmlParser extends BaseAbstractPage {
         }
         ArrayList<String> isbns = new ArrayList<>(Arrays.asList(arrayOfIsbns));
         String image;
-        if (descriptionType.getName().equals(BookDescription.class.getName())) {
-            String author = productInfo.select(productAuthorsCss).text().replace("Автор: ", "");
-            String title = productInfo.attr(productTitleAttr);
-            String annotation = document.select(productAnnotationCss).select("p").text();
-            String publisher = productInfo.attr(productPublisherAttr);
-            String series = productInfo.attr(productSeriesAttr);
-            Element productImage = document.selectFirst(this.productImageCss);
-            assert productImage != null;
-            image = Objects.requireNonNull(productImage.selectFirst(productImageAttr)).attr(productImageSrcAttr);
-            images.add(image);
-            bookDescription.initializeDescriptionForMainBook(author, title, annotation, publisher, series, bookId, isbns, images);
-        } else {
-            bookDescription.initializeDescriptionForSectionGroup(bookId, isbns);
-        }
+        String author = productInfo.select(productAuthorsCss).text().replace("Автор: ", "");
+        String title = productInfo.attr(productTitleAttr);
+        String annotation = document.select(productAnnotationCss).select("p").text();
+        String publisher = productInfo.attr(productPublisherAttr);
+        String series = productInfo.attr(productSeriesAttr);
+        Element productImage = document.selectFirst(this.productImageCss);
+        assert productImage != null;
+        image = Objects.requireNonNull(productImage.selectFirst(productImageAttr)).attr(productImageSrcAttr);
+        images.add(image);
+        bookData.put("bookId", author);
+        bookData.put("author", author);
+        bookData.put("title", title);
+        bookData.put("annotation", annotation);
+        bookData.put("publisher", publisher);
+        bookData.put("series", series);
+        bookData.put("isbns", isbns);
+        bookData.put("images", images);
+        bookDescription.initializeDescriptionForBook(bookData);
         return bookDescription;
     }
 

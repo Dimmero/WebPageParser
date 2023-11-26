@@ -2,6 +2,7 @@ package parser.entities;
 
 import lombok.*;
 import java.util.ArrayList;
+import java.util.Map;
 
 @Setter
 @Getter
@@ -18,18 +19,14 @@ public class BookDescription implements BookDescriptionInterface {
     private ArrayList<String> images;
 
     @Override
-    public void initializeDescriptionForMainBook(String author, String title, String annotation, String publisher, String series, String bookId, ArrayList<String> isbns, ArrayList<String> images) {
-        setAuthor(author);
-        setTitle(title);
-        setAnnotation(annotation);
-        setPublisher(publisher);
-        setSeries(series);
-        setBookId(bookId);
-        setIsbns(isbns);
-        setImages(images);
-    }
-
-    @Override
-    public void initializeDescriptionForSectionGroup(String bookId, ArrayList<String> isbns) {
+    public void initializeDescriptionForBook(Map<String, Object> attributes) {
+        setAuthor((String) attributes.get("author"));
+        setTitle((String) attributes.get("title"));
+        setAnnotation((String) attributes.get("annotation"));
+        setPublisher((String) attributes.get("publisher"));
+        setSeries((String) attributes.get("series"));
+        setBookId((String) attributes.get("bookId"));
+        setIsbns((ArrayList<String>) attributes.get("isbns"));
+        setImages((ArrayList<String>) attributes.get("images"));
     }
 }

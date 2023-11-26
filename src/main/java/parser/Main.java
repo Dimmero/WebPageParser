@@ -9,7 +9,7 @@ import java.net.URISyntaxException;
 import java.util.List;
 
 public class Main {
-    public static Book<BookDescriptionInterface> book = new Book<>();
+    public static Book<BookDescription> book = new Book<>();
     public static String FILE_NAME_PATH = "/books.json";
     public static String LOGS_PATH = "/logs";
     public static String webPageUrl = System.getenv("PARSE_SERVICE");
