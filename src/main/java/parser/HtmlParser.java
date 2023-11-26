@@ -63,7 +63,7 @@ public class HtmlParser extends BaseAbstractPage {
         }
         ArrayList<String> isbns = new ArrayList<>(Arrays.asList(arrayOfIsbns));
         String image;
-        String author = productInfo.select(productAuthorsCss).text().replace("Автор: ", "");
+        String author = Objects.requireNonNull(productInfo.selectFirst(productAuthorsCss)).text().replace("Автор: ", "");
         String title = productInfo.attr(productTitleAttr);
         String annotation = document.select(productAnnotationCss).select("p").text();
         String publisher = productInfo.attr(productPublisherAttr);
@@ -72,7 +72,7 @@ public class HtmlParser extends BaseAbstractPage {
         assert productImage != null;
         image = Objects.requireNonNull(productImage.selectFirst(productImageAttr)).attr(productImageSrcAttr);
         images.add(image);
-        bookData.put("bookId", author);
+        bookData.put("bookId", bookId);
         bookData.put("author", author);
         bookData.put("title", title);
         bookData.put("annotation", annotation);
