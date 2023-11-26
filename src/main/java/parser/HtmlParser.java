@@ -51,17 +51,7 @@ public class HtmlParser extends BaseAbstractPage {
         String bookId = productInfo.attr(productIdAttr);
         String isbnString = productInfo.select(productIsbnCss).text().replace("ISBN: ", "");
         ArrayList<String> images = new ArrayList<>();
-        String[] arrayOfIsbns = isbnString.split(",");
-        for (int i = 0; i < arrayOfIsbns.length; i++) {
-            if (i == 0) {
-                arrayOfIsbns[i] = arrayOfIsbns[i].replace("все", "");
-            }
-            if (i == arrayOfIsbns.length - 1) {
-                arrayOfIsbns[i] = arrayOfIsbns[i].replace("скрыть", "");
-            }
-            arrayOfIsbns[i] = arrayOfIsbns[i].replace("-", "").trim();
-        }
-        ArrayList<String> isbns = new ArrayList<>(Arrays.asList(arrayOfIsbns));
+        ArrayList<String> isbns = getArrayOfIsbns(isbnString);
         String image;
         String author = Objects.requireNonNull(productInfo.selectFirst(productAuthorsCss)).text().replace("Автор: ", "");
         String title = productInfo.attr(productTitleAttr);
@@ -158,5 +148,19 @@ public class HtmlParser extends BaseAbstractPage {
             arr.add(Main.webPageUrl + href);
         }
         return new ArrayList<>(arr);
+    }
+
+    private ArrayList<String> getArrayOfIsbns(String isbnString) {
+        String[] arrayOfIsbns = isbnString.split(",");
+        for (int i = 0; i < arrayOfIsbns.length; i++) {
+            if (i == 0) {
+                arrayOfIsbns[i] = arrayOfIsbns[i].replace("все", "");
+            }
+            if (i == arrayOfIsbns.length - 1) {
+                arrayOfIsbns[i] = arrayOfIsbns[i].replace("скрыть", "");
+            }
+            arrayOfIsbns[i] = arrayOfIsbns[i].replace("-", "").trim();
+        }
+        return new ArrayList<>(Arrays.asList(arrayOfIsbns));
     }
 }
