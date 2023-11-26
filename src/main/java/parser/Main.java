@@ -23,7 +23,7 @@ public class Main {
             File jarFile = new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI());
             jarPath = jarFile.getParent();
             JsonWriter jsonWriter = new JsonWriter(jarPath + FILE_NAME_PATH);
-            deleteLogFiles(jarPath + LOGS_PATH);
+//            deleteLogFiles(jarPath + LOGS_PATH);
             SearchBookByIsbnFeature searchBookByIsbnFeature = new SearchBookByIsbnFeature();
             String mainBookUrl = searchBookByIsbnFeature.provideIsbnAndGoToBookPage(isbn, webPageUrl);
             book = htmlParser.createBookData(Book.class, BookDescription.class, mainBookUrl);
