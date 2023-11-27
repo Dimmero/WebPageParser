@@ -40,6 +40,7 @@ public class HtmlParser extends BaseAbstractPage {
         String isbnString = productInfo.select(".isbn").text().replace("ISBN: ", "");
         ArrayList<String> images = new ArrayList<>();
         ArrayList<String> isbns = getArrayOfIsbns(isbnString);
+        isbns.add(Main.mainIsbn);
         String authorsString = Objects.requireNonNull(productInfo.selectFirst(".authors")).text().replace("Автор:", "");
         String[] arrayOfAuthors = authorsString.split(",");
         ArrayList<String> authors = new ArrayList<>();

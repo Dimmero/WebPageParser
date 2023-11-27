@@ -3,10 +3,12 @@ package parser;
 import parser.entities.Book;
 import parser.entities.BookDescription;
 import parser.entities.BookDescriptionInterface;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
+import static parser.pages.BaseAbstractPage.driver;
 
 public class Main {
     public static Book<BookDescription> book = new Book<>();
@@ -14,30 +16,34 @@ public class Main {
     public static String LOGS_PATH = "/logs";
     public static String webPageUrl = System.getenv("PARSE_SERVICE");
     public static HtmlParser htmlParser = new HtmlParser();
+    public static String mainIsbn;
 
     public static void main(String[] args) throws IOException, URISyntaxException {
-        String isbn = args[0];
+        mainIsbn = args[0];
         int limitOfRelatedBooks = Integer.parseInt(args[1]);
         String jarPath;
-         try {
+        try {
             File jarFile = new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI());
             jarPath = jarFile.getParent();
             JsonWriter jsonWriter = new JsonWriter(jarPath + FILE_NAME_PATH);
 //            deleteLogFiles(jarPath + LOGS_PATH);
             SearchBookByIsbnFeature searchBookByIsbnFeature = new SearchBookByIsbnFeature();
-            String mainBookUrl = searchBookByIsbnFeature.provideIsbnAndGoToBookPage(isbn, webPageUrl);
-            book = htmlParser.createBookData(Book.class, BookDescription.class, mainBookUrl);
-            String seriesUrl = htmlParser.getSectionUrl(GroupTypes.SERIES, mainBookUrl);
-            String authorsUrl = htmlParser.getSectionUrl(GroupTypes.AUTHORS, mainBookUrl);
-            String genresUrl = htmlParser.getSectionUrl(GroupTypes.GENRE, mainBookUrl);
-            List<String> seriesBooks = htmlParser.getBooksForNthElementsOfSection(seriesUrl);
-            List<String> authorsBooks = htmlParser.getBooksForNthElementsOfSection(authorsUrl);
-            List<String> genresBooks = htmlParser.getBooksForNthElementsOfSection(genresUrl);
-            htmlParser.addRelatedBooks(GroupTypes.SERIES, seriesBooks, limitOfRelatedBooks);
-            htmlParser.addRelatedBooks(GroupTypes.AUTHORS, authorsBooks, limitOfRelatedBooks);
-            htmlParser.addRelatedBooks(GroupTypes.GENRE, genresBooks, limitOfRelatedBooks);
-            SearchBookByIsbnFeature.driver.closeDriver();
-            jsonWriter.writeBookToFile(book);
+            List<String> mainBookUrls = searchBookByIsbnFeature.provideIsbnAndGoToBookPage(mainIsbn, webPageUrl);
+            for (String mainBookUrl : mainBookUrls) {
+                book = htmlParser.createBookData(Book.class, BookDescription.class, mainBookUrl);
+                String seriesUrl = htmlParser.getSectionUrl(GroupTypes.SERIES, mainBookUrl);
+                String authorsUrl = htmlParser.getSectionUrl(GroupTypes.AUTHORS, mainBookUrl);
+                String genresUrl = htmlParser.getSectionUrl(GroupTypes.GENRE, mainBookUrl);
+                List<String> seriesBooks = htmlParser.getBooksForNthElementsOfSection(seriesUrl);
+                List<String> authorsBooks = htmlParser.getBooksForNthElementsOfSection(authorsUrl);
+                List<String> genresBooks = htmlParser.getBooksForNthElementsOfSection(genresUrl);
+                htmlParser.addRelatedBooks(GroupTypes.SERIES, seriesBooks, limitOfRelatedBooks);
+                htmlParser.addRelatedBooks(GroupTypes.AUTHORS, authorsBooks, limitOfRelatedBooks);
+                htmlParser.addRelatedBooks(GroupTypes.GENRE, genresBooks, limitOfRelatedBooks);
+                jsonWriter.writeBookToFile(book);
+                book = null;
+            }
+            driver.closeDriver();
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
