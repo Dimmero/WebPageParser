@@ -36,7 +36,7 @@ public class SeleniumDriver {
 
     public void runChromeDriver() throws MalformedURLException, URISyntaxException {
 //        System.setProperty("web.driver.chrome", "usr/local/bin");
-//        Logger.getLogger("org.openqa.selenium").setLevel(Level.INFO);
+        Logger.getLogger("org.openqa.selenium").setLevel(Level.INFO);
         ChromeOptions chromeOptions = getChromeOptions();
         URL urlHost = new URI("http://" + seleniumHost + ":" + seleniumPort + seleniumPath).toURL();
         driver = new RemoteWebDriver(
@@ -72,9 +72,12 @@ public class SeleniumDriver {
     }
 
     public void closeDriver() {
-        driver.close();
-        driver.quit();
+        try {
+            if (driver != null) {
+                driver.quit();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
-
-
 }
