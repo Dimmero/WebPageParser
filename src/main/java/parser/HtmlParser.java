@@ -1,20 +1,14 @@
 package parser;
 
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.remote.RemoteWebDriver;
 import parser.entities.*;
 import parser.pages.BaseAbstractPage;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.openqa.selenium.By;
-import org.openqa.selenium.support.ui.ExpectedConditions;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -84,7 +78,7 @@ public class HtmlParser extends BaseAbstractPage {
         bookDescription.initializeDescriptionForBook(bookData);
         return bookDescription;
     }
-    
+
 
     public void addRelatedBooks2(GroupTypes group, List<String> relatedBooksUrls, int limit, SeleniumDriver driver) {
         ArrayList<BookForGroups<BookDescriptionForGroups>> books = new ArrayList<>();
@@ -100,10 +94,6 @@ public class HtmlParser extends BaseAbstractPage {
             books.add(book);
         }
         setRelatedBooksForBook(String.valueOf(group), books);
-    }
-
-    public void shutdownExecutor() {
-        executorService.shutdown();
     }
 
 //    public void addRelatedBooks(GroupTypes group, List<String> relatedBooksUrls, int limit) {
@@ -144,11 +134,10 @@ public class HtmlParser extends BaseAbstractPage {
         if (sectionUrl.isBlank()) {
             return null;
         }
-//        driver.getDriver().get(sectionUrl);
-//        driver.getShortWait10().until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.tagName("html")));
-//        String html = driver.getDriver().getPageSource();
-        driver.get(sectionUrl);
-        String html = driver.getPageSource();
+        driver.getDriver().get(sectionUrl);
+        String html = driver.getDriver().getPageSource();
+//        driver.get(sectionUrl);
+//        String html = driver.getPageSource();
         Document document = Jsoup.parse(html);
         String elementOfSection = "a.cover";
         Elements sectionElements = document.select(elementOfSection);
