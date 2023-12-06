@@ -1,5 +1,8 @@
 package parser;
 
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.remote.RemoteWebDriver;
 import parser.entities.*;
 import parser.pages.BaseAbstractPage;
 import org.jsoup.Jsoup;
@@ -11,11 +14,14 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URISyntaxException;
 import java.util.*;
+import java.util.concurrent.*;
 
 public class HtmlParser extends BaseAbstractPage {
+    private final ExecutorService executorService = Executors.newFixedThreadPool(10); // You can adjust the pool size
 
-    public <T extends BookInterface<R>, R extends BookDescriptionInterface> T createBookData(Class<T> bookType, Class<R> bookDescriptionType, String urlSource) {
+    public <T extends BookInterface<R>, R extends BookDescriptionInterface> T createBookData(Class<T> bookType, Class<R> bookDescriptionType, String urlSource, SeleniumDriver driver) {
         try {
             driver.getDriver().get(urlSource);
             T book = bookType.getDeclaredConstructor().newInstance();
@@ -78,8 +84,9 @@ public class HtmlParser extends BaseAbstractPage {
         bookDescription.initializeDescriptionForBook(bookData);
         return bookDescription;
     }
+    
 
-    public void addRelatedBooks(GroupTypes group, List<String> relatedBooksUrls, int limit) {
+    public void addRelatedBooks2(GroupTypes group, List<String> relatedBooksUrls, int limit, SeleniumDriver driver) {
         ArrayList<BookForGroups<BookDescriptionForGroups>> books = new ArrayList<>();
         for (int i = 0; i < limit; i++) {
             if (relatedBooksUrls == null) {
@@ -89,11 +96,31 @@ public class HtmlParser extends BaseAbstractPage {
                 limit = relatedBooksUrls.size();
             }
             String sourceUrl = relatedBooksUrls.get(i);
-            BookForGroups<BookDescriptionForGroups> book = Main.htmlParser.createBookData(BookForGroups.class, BookDescriptionForGroups.class, sourceUrl);
+            BookForGroups<BookDescriptionForGroups> book = Main.htmlParser.createBookData(BookForGroups.class, BookDescriptionForGroups.class, sourceUrl, driver);
             books.add(book);
         }
         setRelatedBooksForBook(String.valueOf(group), books);
     }
+
+    public void shutdownExecutor() {
+        executorService.shutdown();
+    }
+
+//    public void addRelatedBooks(GroupTypes group, List<String> relatedBooksUrls, int limit) {
+//        ArrayList<BookForGroups<BookDescriptionForGroups>> books = new ArrayList<>();
+//        for (int i = 0; i < limit; i++) {
+//            if (relatedBooksUrls == null) {
+//                break;
+//            }
+//            if (relatedBooksUrls.size() < limit) {
+//                limit = relatedBooksUrls.size();
+//            }
+//            String sourceUrl = relatedBooksUrls.get(i);
+//            BookForGroups<BookDescriptionForGroups> book = Main.htmlParser.createBookData(BookForGroups.class, BookDescriptionForGroups.class, sourceUrl);
+//            books.add(book);
+//        }
+//        setRelatedBooksForBook(String.valueOf(group), books);
+//    }
 
     private void setRelatedBooksForBook(String group, ArrayList<BookForGroups<BookDescriptionForGroups>> relatedBooks) {
         switch (group) {
@@ -112,14 +139,16 @@ public class HtmlParser extends BaseAbstractPage {
         }
     }
 
-    public List<String> getBooksForNthElementsOfSection(String sectionUrl) {
+    public List<String> getBooksForNthElementsOfSection(String sectionUrl, SeleniumDriver driver) {
         List<String> sectionUrls;
         if (sectionUrl.isBlank()) {
             return null;
         }
-        driver.getDriver().get(sectionUrl);
-        driver.getShortWait10().until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.tagName("html")));
-        String html = driver.getDriver().getPageSource();
+//        driver.getDriver().get(sectionUrl);
+//        driver.getShortWait10().until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.tagName("html")));
+//        String html = driver.getDriver().getPageSource();
+        driver.get(sectionUrl);
+        String html = driver.getPageSource();
         Document document = Jsoup.parse(html);
         String elementOfSection = "a.cover";
         Elements sectionElements = document.select(elementOfSection);
