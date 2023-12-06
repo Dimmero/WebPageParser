@@ -1,12 +1,7 @@
 package parser;
 
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.remote.RemoteWebDriver;
 import parser.entities.Book;
 import parser.entities.BookDescription;
-import parser.entities.BookDescriptionInterface;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -28,7 +23,7 @@ public class Main {
     public static String mainIsbn;
     private static final Object bookLock = new Object();
 
-    public static void main(String[] args) throws IOException, URISyntaxException {
+    public static void main(String[] args) throws IOException {
         System.out.println(LocalDateTime.now());
         mainIsbn = args[0];
         int limitOfRelatedBooks = Integer.parseInt(args[1]);

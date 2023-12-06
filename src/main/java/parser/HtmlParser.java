@@ -13,8 +13,6 @@ import java.util.*;
 import java.util.concurrent.*;
 
 public class HtmlParser extends BaseAbstractPage {
-    private final ExecutorService executorService = Executors.newFixedThreadPool(10); // You can adjust the pool size
-
     public <T extends BookInterface<R>, R extends BookDescriptionInterface> T createBookData(Class<T> bookType, Class<R> bookDescriptionType, String urlSource, SeleniumDriver driver) {
         try {
             driver.getDriver().get(urlSource);
