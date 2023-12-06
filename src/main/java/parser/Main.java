@@ -2,6 +2,7 @@ package parser;
 
 import parser.entities.Book;
 import parser.entities.BookDescription;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -79,7 +80,7 @@ public class Main {
                 book = null;
             }
 //            driver.closeDriver();
-            System.out.println(LocalDateTime.now().getMinute());
+            System.out.println(LocalDateTime.now());
         } catch (URISyntaxException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {

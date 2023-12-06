@@ -1,16 +1,15 @@
 package parser;
 
-import parser.entities.*;
-import parser.pages.BaseAbstractPage;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import parser.entities.*;
+import parser.pages.BaseAbstractPage;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
-import java.util.concurrent.*;
 
 public class HtmlParser extends BaseAbstractPage {
     public <T extends BookInterface<R>, R extends BookDescriptionInterface> T createBookData(Class<T> bookType, Class<R> bookDescriptionType, String urlSource, SeleniumDriver driver) {
