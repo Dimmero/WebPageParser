@@ -1,8 +1,12 @@
 package parser;
 
 import org.openqa.selenium.WebElement;
-import parser.pages.*;
-import java.net.MalformedURLException;
+import parser.pages.BaseAbstractPage;
+import parser.pages.Cookies;
+import parser.pages.IndexPage;
+import parser.pages.SearchPage;
+
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,7 +16,7 @@ public class SearchBookByIsbnFeature extends BaseAbstractPage {
     private final SearchPage SEARCH_PAGE;
     private final Cookies COOKIES;
 
-    public SearchBookByIsbnFeature() throws MalformedURLException, URISyntaxException {
+    public SearchBookByIsbnFeature() throws IOException, URISyntaxException {
         driver = new SeleniumDriver();
         this.INDEX_PAGE = new IndexPage();
         this.SEARCH_PAGE = new SearchPage();
@@ -27,6 +31,7 @@ public class SearchBookByIsbnFeature extends BaseAbstractPage {
         for (WebElement el: SEARCH_PAGE.findProductCards()) {
             cards.add(el.getAttribute("href"));
         }
+        driver.closeDriver();
         return cards;
     }
 

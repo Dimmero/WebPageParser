@@ -1,5 +1,6 @@
 package parser;
 
+import lombok.Getter;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -9,10 +10,18 @@ import parser.pages.BaseAbstractPage;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URISyntaxException;
 import java.util.*;
 
+@Getter
 public class HtmlParser extends BaseAbstractPage {
-    public <T extends BookInterface<R>, R extends BookDescriptionInterface> T createBookData(Class<T> bookType, Class<R> bookDescriptionType, String urlSource, SeleniumDriver driver) {
+    private SeleniumDriver driver;
+
+    public HtmlParser() throws IOException, URISyntaxException {
+        driver = new SeleniumDriver();
+    }
+
+    public <T extends BookInterface<R>, R extends BookDescriptionInterface> T createBookData(Class<T> bookType, Class<R> bookDescriptionType, String urlSource) {
         try {
             driver.getDriver().get(urlSource);
             T book = bookType.getDeclaredConstructor().newInstance();
@@ -76,8 +85,14 @@ public class HtmlParser extends BaseAbstractPage {
         return bookDescription;
     }
 
+    public void addRelatedBooks(GroupTypes group, List<String> relatedBooksUrls, int limit, boolean last) {
+        addRelatedBooks(group, relatedBooksUrls, limit);
+        if (last) {
+            this.driver.closeDriver();
+        }
+    }
 
-    public void addRelatedBooks2(GroupTypes group, List<String> relatedBooksUrls, int limit, SeleniumDriver driver) {
+    public void addRelatedBooks(GroupTypes group, List<String> relatedBooksUrls, int limit) {
         ArrayList<BookForGroups<BookDescriptionForGroups>> books = new ArrayList<>();
         for (int i = 0; i < limit; i++) {
             if (relatedBooksUrls == null) {
@@ -87,27 +102,11 @@ public class HtmlParser extends BaseAbstractPage {
                 limit = relatedBooksUrls.size();
             }
             String sourceUrl = relatedBooksUrls.get(i);
-            BookForGroups<BookDescriptionForGroups> book = Main.htmlParser.createBookData(BookForGroups.class, BookDescriptionForGroups.class, sourceUrl, driver);
+            BookForGroups<BookDescriptionForGroups> book = this.createBookData(BookForGroups.class, BookDescriptionForGroups.class, sourceUrl);
             books.add(book);
         }
         setRelatedBooksForBook(String.valueOf(group), books);
     }
-
-//    public void addRelatedBooks(GroupTypes group, List<String> relatedBooksUrls, int limit) {
-//        ArrayList<BookForGroups<BookDescriptionForGroups>> books = new ArrayList<>();
-//        for (int i = 0; i < limit; i++) {
-//            if (relatedBooksUrls == null) {
-//                break;
-//            }
-//            if (relatedBooksUrls.size() < limit) {
-//                limit = relatedBooksUrls.size();
-//            }
-//            String sourceUrl = relatedBooksUrls.get(i);
-//            BookForGroups<BookDescriptionForGroups> book = Main.htmlParser.createBookData(BookForGroups.class, BookDescriptionForGroups.class, sourceUrl);
-//            books.add(book);
-//        }
-//        setRelatedBooksForBook(String.valueOf(group), books);
-//    }
 
     private void setRelatedBooksForBook(String group, ArrayList<BookForGroups<BookDescriptionForGroups>> relatedBooks) {
         switch (group) {
@@ -126,15 +125,13 @@ public class HtmlParser extends BaseAbstractPage {
         }
     }
 
-    public List<String> getBooksForNthElementsOfSection(String sectionUrl, SeleniumDriver driver) {
+    public List<String> getBooksForNthElementsOfSection(String sectionUrl) {
         List<String> sectionUrls;
         if (sectionUrl.isBlank()) {
             return null;
         }
         driver.getDriver().get(sectionUrl);
         String html = driver.getDriver().getPageSource();
-//        driver.get(sectionUrl);
-//        String html = driver.getPageSource();
         Document document = Jsoup.parse(html);
         String elementOfSection = "a.cover";
         Elements sectionElements = document.select(elementOfSection);
