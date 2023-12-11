@@ -28,10 +28,13 @@ public class SearchBookByIsbnFeature extends BaseAbstractPage {
 //        COOKIES.turnOffCookies();
         INDEX_PAGE.sendIsbnAndSubmit(isbn);
         List<String> cards = new ArrayList<>();
-        for (WebElement el: SEARCH_PAGE.findProductCards()) {
+        for (WebElement el : SEARCH_PAGE.findProductCards()) {
             cards.add(el.getAttribute("href"));
         }
         driver.closeDriver();
+        if (cards.size() == 0) {
+            return null;
+        }
         return cards;
     }
 

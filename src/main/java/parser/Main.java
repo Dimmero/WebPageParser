@@ -33,6 +33,9 @@ public class Main {
             JsonWriter jsonWriter = new JsonWriter(jarPath + FILE_NAME_PATH);
             SearchBookByIsbnFeature searchBookByIsbnFeature = new SearchBookByIsbnFeature();
             List<String> mainBookUrls = searchBookByIsbnFeature.provideIsbnAndGoToBookPage(mainIsbn, webPageUrl);
+            if (mainBookUrls == null) {
+                return;
+            }
             HtmlParser htmlParser = new HtmlParser();
             for (String mainBookUrl : mainBookUrls) {
                 book = htmlParser.createBookData(Book.class, BookDescription.class, mainBookUrl);
