@@ -15,7 +15,7 @@ import java.util.*;
 
 @Getter
 public class HtmlParser extends BaseAbstractPage {
-    private SeleniumDriver driver;
+    private final SeleniumDriver driver;
 
     public HtmlParser() throws IOException, URISyntaxException {
         driver = new SeleniumDriver();
@@ -60,7 +60,7 @@ public class HtmlParser extends BaseAbstractPage {
             e.getStackTrace();
         }
         String title = productInfo.attr("data-name");
-        String annotation = document.select("#product-about").select("p").text();
+        String annotation = Objects.requireNonNull(document.select("#product-about").select("p").last()).text();
         String publisher = productInfo.attr("data-pubhouse");
         String series = productInfo.attr("data-series");
         Element productImage = document.selectFirst("#product-image");

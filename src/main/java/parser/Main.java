@@ -49,7 +49,9 @@ public class Main {
                     htmlParser.addRelatedBooks(GroupTypes.SERIES, seriesBooks, limitOfRelatedBooks);
                     htmlParser.addRelatedBooks(GroupTypes.AUTHORS, authorsBooks, limitOfRelatedBooks);
                     htmlParser.addRelatedBooks(GroupTypes.GENRE, genresBooks, limitOfRelatedBooks, true);
+                    htmlParser.getDriver().closeDriver();
                 } else {
+                    htmlParser.getDriver().closeDriver();
                     List<Callable<Void>> tasks = Arrays.asList(
                             () -> {
                                 HtmlParser parser = new HtmlParser();
@@ -79,7 +81,6 @@ public class Main {
                 }
                 book = null;
             }
-            htmlParser.getDriver().closeDriver();
             System.out.println(LocalDateTime.now());
         } catch (URISyntaxException e) {
             e.printStackTrace();
