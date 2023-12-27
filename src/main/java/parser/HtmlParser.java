@@ -1,22 +1,28 @@
 package parser;
 
 import lombok.Getter;
+import lombok.Setter;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import parser.entities.*;
-import parser.pages.BaseAbstractPage;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.net.URISyntaxException;
 import java.util.*;
 
 @Getter
-public class HtmlParser extends BaseAbstractPage {
+@Setter
+public class HtmlParser {
 
-    public HtmlParser() throws URISyntaxException {
+    public ArrayList<String> getMainBooksUrl(String isbn) throws IOException {
+        String urlSource = "https://www.labirint.ru/search/" + isbn + "/?stype=0";
+        Document document = Jsoup.connect(urlSource).get();
+        Elements urls = document.select(".product-card__img");
+        ArrayList<String> mainBooksUrls = new ArrayList<>();
+        urls.forEach(url -> mainBooksUrls.add(Main.webPageUrl + url.attr("href")));
+        return mainBooksUrls;
     }
 
     public <T extends BookInterface<R>, R extends BookDescriptionInterface> T createBookData(Class<T> bookType, Class<R> bookDescriptionType, String urlSource) {
@@ -82,16 +88,18 @@ public class HtmlParser extends BaseAbstractPage {
         return bookDescription;
     }
 
-    public void addRelatedBooks(GroupTypes group, List<String> relatedBooksUrls, int limit) {
+    public void addNthRelatedBooks(GroupTypes group, String url, int limit) throws IOException {
+        String sectionUrl = getSectionUrl(group, url);
+        List<String> relatedBooks = getBooksForSection(sectionUrl);
+        if (relatedBooks == null) {
+            return;
+        }
         ArrayList<BookForGroups<BookDescriptionForGroups>> books = new ArrayList<>();
         for (int i = 0; i < limit; i++) {
-            if (relatedBooksUrls == null) {
-                break;
+            if (relatedBooks.size() < limit) {
+                limit = relatedBooks.size();
             }
-            if (relatedBooksUrls.size() < limit) {
-                limit = relatedBooksUrls.size();
-            }
-            String sourceUrl = relatedBooksUrls.get(i);
+            String sourceUrl = relatedBooks.get(i);
             BookForGroups<BookDescriptionForGroups> book = this.createBookData(BookForGroups.class, BookDescriptionForGroups.class, sourceUrl);
             books.add(book);
         }
@@ -115,7 +123,7 @@ public class HtmlParser extends BaseAbstractPage {
         }
     }
 
-    public List<String> getBooksForNthElementsOfSection(String sectionUrl) throws IOException {
+    private List<String> getBooksForSection(String sectionUrl) throws IOException {
         List<String> sectionUrls;
         if (sectionUrl.isBlank()) {
             return null;
@@ -124,7 +132,7 @@ public class HtmlParser extends BaseAbstractPage {
         String elementOfSection = "a.cover";
         Elements sectionElements = document.select(elementOfSection);
         sectionUrls = extractUrlOfSection(sectionElements);
-        return new ArrayList<>(sectionUrls);
+        return sectionUrls;
     }
 
     public String getSectionUrl(GroupTypes section, String url) throws IOException {
@@ -133,7 +141,7 @@ public class HtmlParser extends BaseAbstractPage {
         String sectionName = section.name().toLowerCase();
         Element sectionUrl;
         try {
-            if (section.equals(GroupTypes.GENRE)) {
+            if (section == GroupTypes.GENRE) {
                 sectionUrl = Objects.requireNonNull(document.selectFirst("." + "thermo-item_last")).selectFirst("a");
             } else {
                 sectionUrl = Objects.requireNonNull(document.selectFirst("." + sectionName)).selectFirst("a");

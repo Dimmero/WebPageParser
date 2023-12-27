@@ -31,42 +31,32 @@ public class Main {
             File jarFile = new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI());
             jarPath = jarFile.getParent();
             JsonWriter jsonWriter = new JsonWriter(jarPath + FILE_NAME_PATH);
-            SearchBookByIsbnFeature searchBookByIsbnFeature = new SearchBookByIsbnFeature();
-            List<String> mainBookUrls = searchBookByIsbnFeature.provideIsbnAndGoToBookPage(mainIsbn, webPageUrl);
+            HtmlParser htmlParser = new HtmlParser();
+            List<String> mainBookUrls = htmlParser.getMainBooksUrl(mainIsbn);
             if (mainBookUrls == null) {
                 return;
             }
-            HtmlParser htmlParser = new HtmlParser();
             for (String mainBookUrl : mainBookUrls) {
                 book = htmlParser.createBookData(Book.class, BookDescription.class, mainBookUrl);
-                String seriesUrl = htmlParser.getSectionUrl(GroupTypes.SERIES, mainBookUrl);
-                String authorsUrl = htmlParser.getSectionUrl(GroupTypes.AUTHORS, mainBookUrl);
-                String genresUrl = htmlParser.getSectionUrl(GroupTypes.GENRE, mainBookUrl);
                 if (oneThread) {
-                    List<String> seriesBooks = htmlParser.getBooksForNthElementsOfSection(seriesUrl);
-                    List<String> authorsBooks = htmlParser.getBooksForNthElementsOfSection(authorsUrl);
-                    List<String> genresBooks = htmlParser.getBooksForNthElementsOfSection(genresUrl);
-                    htmlParser.addRelatedBooks(GroupTypes.SERIES, seriesBooks, limitOfRelatedBooks);
-                    htmlParser.addRelatedBooks(GroupTypes.AUTHORS, authorsBooks, limitOfRelatedBooks);
-                    htmlParser.addRelatedBooks(GroupTypes.GENRE, genresBooks, limitOfRelatedBooks);
+                    htmlParser.addNthRelatedBooks(GroupTypes.SERIES, mainBookUrl, limitOfRelatedBooks);
+                    htmlParser.addNthRelatedBooks(GroupTypes.AUTHORS, mainBookUrl, limitOfRelatedBooks);
+                    htmlParser.addNthRelatedBooks(GroupTypes.GENRE, mainBookUrl, limitOfRelatedBooks);
                 } else {
                     List<Callable<Void>> tasks = Arrays.asList(
                             () -> {
                                 HtmlParser parser = new HtmlParser();
-                                List<String> seriesBooks = parser.getBooksForNthElementsOfSection(seriesUrl);
-                                parser.addRelatedBooks(GroupTypes.SERIES, seriesBooks, limitOfRelatedBooks);
+                                parser.addNthRelatedBooks(GroupTypes.SERIES, mainBookUrl, limitOfRelatedBooks);
                                 return null;
                             },
                             () -> {
                                 HtmlParser parser = new HtmlParser();
-                                List<String> authorsBooks = parser.getBooksForNthElementsOfSection(authorsUrl);
-                                parser.addRelatedBooks(GroupTypes.AUTHORS, authorsBooks, limitOfRelatedBooks);
+                                parser.addNthRelatedBooks(GroupTypes.AUTHORS, mainBookUrl, limitOfRelatedBooks);
                                 return null;
                             },
                             () -> {
                                 HtmlParser parser = new HtmlParser();
-                                List<String> genresBooks = parser.getBooksForNthElementsOfSection(genresUrl);
-                                parser.addRelatedBooks(GroupTypes.GENRE, genresBooks, limitOfRelatedBooks);
+                                parser.addNthRelatedBooks(GroupTypes.GENRE, mainBookUrl, limitOfRelatedBooks);
                                 return null;
                             }
                     );
