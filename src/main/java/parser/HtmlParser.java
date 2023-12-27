@@ -15,15 +15,12 @@ import java.util.*;
 
 @Getter
 public class HtmlParser extends BaseAbstractPage {
-    private final SeleniumDriver driver;
 
-    public HtmlParser() throws IOException, URISyntaxException {
-        driver = new SeleniumDriver();
+    public HtmlParser() throws URISyntaxException {
     }
 
     public <T extends BookInterface<R>, R extends BookDescriptionInterface> T createBookData(Class<T> bookType, Class<R> bookDescriptionType, String urlSource) {
         try {
-            driver.getDriver().get(urlSource);
             T book = bookType.getDeclaredConstructor().newInstance();
             Document document = Jsoup.connect(urlSource).get();
             R bookDescription = setDescriptionForBook(document, bookDescriptionType);
@@ -85,13 +82,6 @@ public class HtmlParser extends BaseAbstractPage {
         return bookDescription;
     }
 
-    public void addRelatedBooks(GroupTypes group, List<String> relatedBooksUrls, int limit, boolean last) {
-        addRelatedBooks(group, relatedBooksUrls, limit);
-        if (last) {
-            this.driver.closeDriver();
-        }
-    }
-
     public void addRelatedBooks(GroupTypes group, List<String> relatedBooksUrls, int limit) {
         ArrayList<BookForGroups<BookDescriptionForGroups>> books = new ArrayList<>();
         for (int i = 0; i < limit; i++) {
@@ -125,14 +115,12 @@ public class HtmlParser extends BaseAbstractPage {
         }
     }
 
-    public List<String> getBooksForNthElementsOfSection(String sectionUrl) {
+    public List<String> getBooksForNthElementsOfSection(String sectionUrl) throws IOException {
         List<String> sectionUrls;
         if (sectionUrl.isBlank()) {
             return null;
         }
-        driver.getDriver().get(sectionUrl);
-        String html = driver.getDriver().getPageSource();
-        Document document = Jsoup.parse(html);
+        Document document = Jsoup.connect(sectionUrl).get();
         String elementOfSection = "a.cover";
         Elements sectionElements = document.select(elementOfSection);
         sectionUrls = extractUrlOfSection(sectionElements);
@@ -140,7 +128,6 @@ public class HtmlParser extends BaseAbstractPage {
     }
 
     public String getSectionUrl(GroupTypes section, String url) throws IOException {
-        driver.getDriver().get(url);
         Document document = Jsoup.connect(url).get();
         String urlOfSection = "";
         String sectionName = section.name().toLowerCase();

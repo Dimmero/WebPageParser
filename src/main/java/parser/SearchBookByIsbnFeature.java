@@ -31,6 +31,7 @@ public class SearchBookByIsbnFeature extends BaseAbstractPage {
         for (WebElement el : SEARCH_PAGE.findProductCards()) {
             cards.add(el.getAttribute("href"));
         }
+        driver.closeDriver();
         if (cards.size() == 0) {
             return null;
         }

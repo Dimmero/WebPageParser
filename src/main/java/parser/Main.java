@@ -48,27 +48,25 @@ public class Main {
                     List<String> genresBooks = htmlParser.getBooksForNthElementsOfSection(genresUrl);
                     htmlParser.addRelatedBooks(GroupTypes.SERIES, seriesBooks, limitOfRelatedBooks);
                     htmlParser.addRelatedBooks(GroupTypes.AUTHORS, authorsBooks, limitOfRelatedBooks);
-                    htmlParser.addRelatedBooks(GroupTypes.GENRE, genresBooks, limitOfRelatedBooks, true);
-                    htmlParser.getDriver().closeDriver();
+                    htmlParser.addRelatedBooks(GroupTypes.GENRE, genresBooks, limitOfRelatedBooks);
                 } else {
-                    htmlParser.getDriver().closeDriver();
                     List<Callable<Void>> tasks = Arrays.asList(
                             () -> {
                                 HtmlParser parser = new HtmlParser();
                                 List<String> seriesBooks = parser.getBooksForNthElementsOfSection(seriesUrl);
-                                parser.addRelatedBooks(GroupTypes.SERIES, seriesBooks, limitOfRelatedBooks, true);
+                                parser.addRelatedBooks(GroupTypes.SERIES, seriesBooks, limitOfRelatedBooks);
                                 return null;
                             },
                             () -> {
                                 HtmlParser parser = new HtmlParser();
                                 List<String> authorsBooks = parser.getBooksForNthElementsOfSection(authorsUrl);
-                                parser.addRelatedBooks(GroupTypes.AUTHORS, authorsBooks, limitOfRelatedBooks, true);
+                                parser.addRelatedBooks(GroupTypes.AUTHORS, authorsBooks, limitOfRelatedBooks);
                                 return null;
                             },
                             () -> {
                                 HtmlParser parser = new HtmlParser();
                                 List<String> genresBooks = parser.getBooksForNthElementsOfSection(genresUrl);
-                                parser.addRelatedBooks(GroupTypes.GENRE, genresBooks, limitOfRelatedBooks, true);
+                                parser.addRelatedBooks(GroupTypes.GENRE, genresBooks, limitOfRelatedBooks);
                                 return null;
                             }
                     );
