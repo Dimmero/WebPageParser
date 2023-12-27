@@ -23,8 +23,8 @@ public class SearchBookByIsbnFeature extends BaseAbstractPage {
         this.COOKIES = new Cookies();
     }
 
-    public List<String> provideIsbnAndGoToBookPage(String isbn, String webPageUrl) {
-        driver.getDriver().get(webPageUrl);
+    public List<String> provideIsbnAndGoToBookPage(String isbn) {
+        driver.getDriver().get(Main.webPageUrl);
 //        COOKIES.turnOffCookies();
         INDEX_PAGE.sendIsbnAndSubmit(isbn);
         List<String> cards = new ArrayList<>();

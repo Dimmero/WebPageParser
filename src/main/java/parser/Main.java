@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 public class Main {
     public static Book<BookDescription> book = new Book<>();
@@ -20,60 +21,95 @@ public class Main {
     public static String webPageUrl = System.getenv("PARSE_SERVICE");
     public static String mainIsbn;
     private static final Object bookLock = new Object();
+    private static boolean webDriver;
+    private static boolean oneThread;
+    private static int depth;
+    private static String jarPath;
+    private static final HtmlParser htmlParser = new HtmlParser();
+    private static JsonWriter jsonWriter = null;
 
-    public static void main(String[] args) throws IOException {
+
+    public static void main(String[] args) throws IOException, URISyntaxException {
         System.out.println(LocalDateTime.now());
-        mainIsbn = args[0];
-        int limitOfRelatedBooks = Integer.parseInt(args[1]);
-        boolean oneThread = Boolean.parseBoolean(args[2]);
-        String jarPath;
+        initialize(args);
         try {
-            File jarFile = new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-            jarPath = jarFile.getParent();
-            JsonWriter jsonWriter = new JsonWriter(jarPath + FILE_NAME_PATH);
-            HtmlParser htmlParser = new HtmlParser();
-            List<String> mainBookUrls = htmlParser.getMainBooksUrl(mainIsbn);
-            if (mainBookUrls == null) {
-                return;
-            }
-            for (String mainBookUrl : mainBookUrls) {
-                book = htmlParser.createBookData(Book.class, BookDescription.class, mainBookUrl);
-                if (oneThread) {
-                    htmlParser.addNthRelatedBooks(GroupTypes.SERIES, mainBookUrl, limitOfRelatedBooks);
-                    htmlParser.addNthRelatedBooks(GroupTypes.AUTHORS, mainBookUrl, limitOfRelatedBooks);
-                    htmlParser.addNthRelatedBooks(GroupTypes.GENRE, mainBookUrl, limitOfRelatedBooks);
-                } else {
-                    List<Callable<Void>> tasks = Arrays.asList(
-                            () -> {
-                                HtmlParser parser = new HtmlParser();
-                                parser.addNthRelatedBooks(GroupTypes.SERIES, mainBookUrl, limitOfRelatedBooks);
-                                return null;
-                            },
-                            () -> {
-                                HtmlParser parser = new HtmlParser();
-                                parser.addNthRelatedBooks(GroupTypes.AUTHORS, mainBookUrl, limitOfRelatedBooks);
-                                return null;
-                            },
-                            () -> {
-                                HtmlParser parser = new HtmlParser();
-                                parser.addNthRelatedBooks(GroupTypes.GENRE, mainBookUrl, limitOfRelatedBooks);
-                                return null;
-                            }
-                    );
-                    ExecutorService executorService = Executors.newFixedThreadPool(tasks.size());
-                    executorService.invokeAll(tasks);
-                    executorService.shutdown();
-                }
-                synchronized (bookLock) {
-                    jsonWriter.writeBookToFile(book);
-                }
-                book = null;
-            }
-            System.out.println(LocalDateTime.now());
+            processBooks();
         } catch (URISyntaxException e) {
             e.printStackTrace();
+        }
+        System.out.println(LocalDateTime.now());
+    }
+
+    private static void initialize(String[] args) throws URISyntaxException {
+        mainIsbn = args[0];
+        depth = Integer.parseInt(args[1]);
+        oneThread = Boolean.parseBoolean(args[2]);
+        webDriver = Boolean.parseBoolean(args[3]);
+        setJarPath();
+        jsonWriter = new JsonWriter(jarPath + FILE_NAME_PATH);
+    }
+
+    private static void setJarPath() throws URISyntaxException {
+        File jarFile = new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+        jarPath = jarFile.getParent();
+    }
+
+    private static void processBooks() throws IOException, URISyntaxException {
+        List<String> mainBookUrls = getMainBookUrls();
+        if (mainBookUrls != null) {
+            for (String mainBookUrl : mainBookUrls) {
+                processSingleBook(mainBookUrl);
+            }
+        }
+    }
+
+    private static List<String> getMainBookUrls() throws IOException, URISyntaxException {
+        if (webDriver) {
+            SearchBookByIsbnFeature search = new SearchBookByIsbnFeature();
+            return search.provideIsbnAndGoToBookPage(mainIsbn);
+        } else {
+            return htmlParser.getMainBooksUrl(mainIsbn);
+        }
+    }
+
+    private static void processSingleBook(String mainBookUrl) throws IOException {
+        book = htmlParser.createBookData(Book.class, BookDescription.class, mainBookUrl);
+        if (!oneThread) {
+            processBooksWithThreads(mainBookUrl);
+        } else {
+            processBooksWithSingleThread(mainBookUrl);
+        }
+        writeBookToFile();
+        book = null;
+    }
+
+    private static void processBooksWithSingleThread(String mainBookUrl) throws IOException {
+        for (GroupTypes groupType : GroupTypes.values()) {
+            htmlParser.addNthRelatedBooks(groupType, mainBookUrl, depth);
+        }
+    }
+
+    private static void processBooksWithThreads(String mainBookUrl) {
+        List<Callable<Void>> tasks = Arrays.stream(GroupTypes.values())
+                .map(groupType -> (Callable<Void>) () -> {
+                    HtmlParser parser = new HtmlParser();
+                    parser.addNthRelatedBooks(groupType, mainBookUrl, depth);
+                    return null;
+                })
+                .collect(Collectors.toList());
+        ExecutorService executorService = Executors.newFixedThreadPool(tasks.size());
+        try {
+            executorService.invokeAll(tasks);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
+        } finally {
+            executorService.shutdown();
+        }
+    }
+
+    private static void writeBookToFile() {
+        synchronized (bookLock) {
+            jsonWriter.writeBookToFile(book);
         }
     }
 
