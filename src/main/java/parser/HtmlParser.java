@@ -11,6 +11,8 @@ import parser.entities.*;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -88,35 +90,54 @@ public class HtmlParser {
         return bookDescription;
     }
 
-    public void addNthRelatedBooks(GroupTypes group, String url, int limit) throws IOException {
-        String sectionUrl = getSectionUrl(group, url);
-        List<String> relatedBooks = getBooksForSection(sectionUrl);
-        if (relatedBooks == null) {
+    public void addNthRelatedBooks(GroupTypes group, String url, int limit, boolean useParallel) throws IOException {
+        List<String> relatedBooks = getBooksForSection(getSectionUrl(group, url));
+        if (relatedBooks == null || relatedBooks.isEmpty()) {
             return;
         }
-        ArrayList<BookForGroups<BookDescriptionForGroups>> books = new ArrayList<>();
-        for (int i = 0; i < limit; i++) {
-            if (relatedBooks.size() < limit) {
-                limit = relatedBooks.size();
+        int actualLimit = Math.min(limit, relatedBooks.size());
+        List<BookForGroups<BookDescriptionForGroups>> books = Collections.synchronizedList(new ArrayList<>());
+        if (useParallel) {
+            List<Callable<Void>> tasks = relatedBooks.subList(0, actualLimit).stream()
+                    .map(bookUrl -> (Callable<Void>) () -> {
+                        HtmlParser parser = new HtmlParser();
+                        Thread.sleep(150);
+                        books.add(parser.createBookData(BookForGroups.class, BookDescriptionForGroups.class, bookUrl));
+                        return null;
+                    })
+                    .collect(Collectors.toList());
+            ExecutorService executorService = Executors.newFixedThreadPool(tasks.size());
+            try {
+                List<Future<Void>> futures = executorService.invokeAll(tasks);
+                for (Future<Void> future : futures) {
+                    future.get();
+                }
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            } finally {
+                executorService.shutdown();
             }
-            String sourceUrl = relatedBooks.get(i);
-            BookForGroups<BookDescriptionForGroups> book = this.createBookData(BookForGroups.class, BookDescriptionForGroups.class, sourceUrl);
-            books.add(book);
+        } else {
+            relatedBooks.subList(0, actualLimit)
+                    .forEach(urlBook -> {
+                        BookForGroups<BookDescriptionForGroups> book = this.createBookData(BookForGroups.class, BookDescriptionForGroups.class, urlBook);
+                        books.add(book);
+                    });
         }
-        setRelatedBooksForBook(String.valueOf(group), books);
+        setRelatedBooksForBook(group, books);
     }
 
-    private void setRelatedBooksForBook(String group, ArrayList<BookForGroups<BookDescriptionForGroups>> relatedBooks) {
+    private void setRelatedBooksForBook(GroupTypes group, List<BookForGroups<BookDescriptionForGroups>> relatedBooks) {
         switch (group) {
-            case "SERIES": {
+            case SERIES: {
                 Main.book.setBooksOfSeries(relatedBooks);
                 break;
             }
-            case "AUTHORS": {
+            case AUTHORS: {
                 Main.book.setBooksOfAuthor(relatedBooks);
                 break;
             }
-            case "GENRE": {
+            case GENRE: {
                 Main.book.setBooksOfGenre(relatedBooks);
                 break;
             }

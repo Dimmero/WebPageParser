@@ -23,11 +23,11 @@ public class Main {
     private static final Object bookLock = new Object();
     private static boolean webDriver;
     private static boolean oneThread;
+    private static boolean inParallel;
     private static int depth;
     private static String jarPath;
     private static final HtmlParser htmlParser = new HtmlParser();
     private static JsonWriter jsonWriter = null;
-
 
     public static void main(String[] args) throws IOException, URISyntaxException {
         System.out.println(LocalDateTime.now());
@@ -44,7 +44,8 @@ public class Main {
         mainIsbn = args[0];
         depth = Integer.parseInt(args[1]);
         oneThread = Boolean.parseBoolean(args[2]);
-        webDriver = Boolean.parseBoolean(args[3]);
+        inParallel = Boolean.parseBoolean(args[3]);
+        webDriver = Boolean.parseBoolean(args[4]);
         setJarPath();
         jsonWriter = new JsonWriter(jarPath + FILE_NAME_PATH);
     }
@@ -74,10 +75,10 @@ public class Main {
 
     private static void processSingleBook(String mainBookUrl) throws IOException {
         book = htmlParser.createBookData(Book.class, BookDescription.class, mainBookUrl);
-        if (!oneThread) {
-            processBooksWithThreads(mainBookUrl);
-        } else {
+        if (oneThread) {
             processBooksWithSingleThread(mainBookUrl);
+        } else {
+            processBooksWithThreads(mainBookUrl);
         }
         writeBookToFile();
         book = null;
@@ -85,7 +86,7 @@ public class Main {
 
     private static void processBooksWithSingleThread(String mainBookUrl) throws IOException {
         for (GroupTypes groupType : GroupTypes.values()) {
-            htmlParser.addNthRelatedBooks(groupType, mainBookUrl, depth);
+            htmlParser.addNthRelatedBooks(groupType, mainBookUrl, depth, inParallel);
         }
     }
 
@@ -93,7 +94,7 @@ public class Main {
         List<Callable<Void>> tasks = Arrays.stream(GroupTypes.values())
                 .map(groupType -> (Callable<Void>) () -> {
                     HtmlParser parser = new HtmlParser();
-                    parser.addNthRelatedBooks(groupType, mainBookUrl, depth);
+                    parser.addNthRelatedBooks(groupType, mainBookUrl, depth, inParallel);
                     return null;
                 })
                 .collect(Collectors.toList());

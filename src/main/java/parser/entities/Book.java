@@ -1,7 +1,8 @@
 package parser.entities;
 
 import lombok.*;
-import java.util.ArrayList;
+
+import java.util.List;
 
 @Setter
 @Getter
@@ -10,9 +11,9 @@ import java.util.ArrayList;
 @ToString
 public class Book<T extends BookDescription> implements BookInterface<T> {
     private T bookDescription;
-    private ArrayList<BookForGroups<BookDescriptionForGroups>> booksOfAuthor;
-    private ArrayList<BookForGroups<BookDescriptionForGroups>> booksOfSeries;
-    private ArrayList<BookForGroups<BookDescriptionForGroups>> booksOfGenre;
+    private List<BookForGroups<BookDescriptionForGroups>> booksOfAuthor;
+    private List<BookForGroups<BookDescriptionForGroups>> booksOfSeries;
+    private List<BookForGroups<BookDescriptionForGroups>> booksOfGenre;
 
     @Override
     public void initializeBook(T bookDescription) {
