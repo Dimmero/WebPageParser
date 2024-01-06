@@ -65,7 +65,9 @@ public class HtmlParser {
             e.getStackTrace();
         }
         String title = productInfo.attr("data-name");
-        String annotation = Objects.requireNonNull(document.select("#product-about").select("p").last()).text();
+        String annotation = (document.select("#smallannotation").size() == 0)
+                ? Objects.requireNonNull(document.select("#product-about").select("p").first()).text()
+                : Objects.requireNonNull(document.select("#product-about").select("p").last()).text();
         String publisher = productInfo.attr("data-pubhouse");
         String series = productInfo.attr("data-series");
         Element productImage = document.selectFirst("#product-image");
