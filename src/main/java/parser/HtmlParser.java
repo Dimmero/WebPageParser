@@ -12,6 +12,8 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Getter
@@ -146,12 +148,17 @@ public class HtmlParser {
         T bookDescription = descriptionType.getDeclaredConstructor().newInstance();
         String bookId = document.selectXpath("//span[contains(text(), 'ID товара')]/following-sibling::span").text();
         String isbnString = document.selectXpath("//span[@itemprop='isbn']").text();
-//        ArrayList<String> images = new ArrayList<>();
+        ArrayList<String> images = new ArrayList<>();
         ArrayList<String> isbns = new ArrayList<>();
-        isbns.add(isbnString.replaceAll("-", ""));
+        Elements isbnsEls = document.selectXpath("//span[@itemprop='isbn']");
+        isbnsEls.forEach(isbn -> isbns.add(isbn.text().replaceAll("-", "")));
         if (!isbns.contains(Main.mainIsbn.replaceAll("-", "")) && bookDescription instanceof BookDescription) {
             isbns.add(Main.mainIsbn);
         }
+        String mainImage = document.selectXpath("//img[@class='product-gallery__image']").attr("src");
+        Elements thumbImages = document.selectXpath("//img[contains(@class,'thumbnails-gallery__image')]");
+        images.add(extractBaseUrl(mainImage));
+        thumbImages.forEach(img -> images.add(extractBaseUrl(img.text())));
         ArrayList<String> authors = new ArrayList<>();
         Elements authorsElms = document.selectXpath("//a[@itemprop='author']");
         authorsElms.forEach(aut -> authors.add(aut.text()));
@@ -166,9 +173,18 @@ public class HtmlParser {
         bookData.put("publisher", publisher);
         bookData.put("series", series);
         bookData.put("isbns", isbns);
-//        bookData.put("images", images);
+        bookData.put("images", images);
         bookDescription.initializeDescriptionForBook(bookData);
         return bookDescription;
+    }
+
+    private String extractBaseUrl(String url) {
+        Pattern pattern = Pattern.compile("^(.*?)(\\?.*)?$");
+        Matcher matcher = pattern.matcher(url);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return null;
     }
 
     public void addNthRelatedBooks(GroupTypes group, String url, int limit, boolean useParallel) throws IOException {
@@ -241,9 +257,9 @@ public class HtmlParser {
         Document document = Jsoup.connect(url).get();
         String urlOfSection = "";
         String sectionName = section.name().toLowerCase();
-        Element sectionUrl;
+        Element sectionUrl = null;
         try {
-            if (section == GroupTypes.GENRE) {
+            if (section.equals(GroupTypes.GENRE)) {
                 if (Main.parserType.equals(ParserType.LABIRINT)) {
                     sectionUrl = Objects.requireNonNull(document.selectFirst(".thermo-item_last")).selectFirst("a");
                 } else {
@@ -253,7 +269,11 @@ public class HtmlParser {
                 if (Main.parserType.equals(ParserType.LABIRINT)) {
                     sectionUrl = Objects.requireNonNull(document.selectFirst("." + sectionName)).selectFirst("a");
                 } else {
-                    sectionUrl = document.selectXpath("//div[@class='product-detail-characteristics__series-items']//a").get(0);
+                    if (section.equals(GroupTypes.AUTHORS)) {
+                        sectionUrl = document.selectXpath("//a[@itemprop='author']").get(0);
+                    } else if (section.equals(GroupTypes.SERIES)) {
+                        sectionUrl = document.selectXpath("//div[@class='product-detail-characteristics__series-items']//a").get(0);
+                    }
                 }
             }
             assert sectionUrl != null;
