@@ -17,12 +17,56 @@ import java.util.stream.Collectors;
 @Getter
 @Setter
 public class HtmlParser {
+    private final String LAB_SEARCH_QUERY = "https://www.labirint.ru/search/";
+    private final String GOR_SEARCH_QUERY = "https://www.chitai-gorod.ru/search?phrase=";
+    private String urlSource;
+    private String cssQuery;
 
     public ArrayList<String> getMainBooksUrl(String isbn) throws IOException {
-        String urlSource = "https://www.labirint.ru/search/" + isbn + "/?stype=0";
-        Document document = Jsoup.connect(urlSource).get();
-        Elements urls = document.select(".product-card__img");
+        if (Main.parserType.equals(ParserType.LABIRINT)) {
+            urlSource = "https://www.labirint.ru/search/" + isbn + "/?stype=0";
+            cssQuery = ".product-card__img";
+        } else {
+            urlSource = "https://www.chitai-gorod.ru/search?phrase=" + isbn;
+            cssQuery = ".product-card__picture";
+        }
+        return getMainBooksFromSource();
+    }
+
+//    private ArrayList<String> getMainBooksFromSource() throws IOException {
+//        ArrayList<String> mainBooksUrls = new ArrayList<>();
+//        System.setProperty("jdk.http.auth.tunneling.disabledSchemes", "false");
+//        System.setProperty("jdk.http.auth.proxying.disabledSchemes", "false");
+//        System.setProperty("https.proxyHost", "43.152.113.55");
+//        System.setProperty("https.proxyPort", "2334");
+//        Authenticator.setDefault(new Authenticator() {
+//            @Override
+//            public PasswordAuthentication getPasswordAuthentication() {
+//                return new PasswordAuthentication("akudzm", "Metyl123".toCharArray());
+//            }
+//        });
+//        Connection connection = Jsoup.connect(urlSource);
+//        connection.proxy("43.152.113.55", 2334);
+//        connection.method(Connection.Method.GET);
+//        connection.ignoreContentType(true);
+//        try {
+//            Connection.Response response = connection.execute();
+//            Document document = response.parse();
+//            Elements urls = document.select(cssQuery);
+//            urls.forEach(url -> mainBooksUrls.add(Main.webPageUrl + url.attr("href")));
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//        Document document = Jsoup.connect(urlSource).get();
+//        Elements urls = document.select(cssQuery);
+//        urls.forEach(url -> mainBooksUrls.add(Main.webPageUrl + url.attr("href")));
+//        return mainBooksUrls;
+//    }
+
+    private ArrayList<String> getMainBooksFromSource() throws IOException {
         ArrayList<String> mainBooksUrls = new ArrayList<>();
+        Document document = Jsoup.connect(urlSource).get();
+        Elements urls = document.select(cssQuery);
         urls.forEach(url -> mainBooksUrls.add(Main.webPageUrl + url.attr("href")));
         return mainBooksUrls;
     }
@@ -31,7 +75,12 @@ public class HtmlParser {
         try {
             T book = bookType.getDeclaredConstructor().newInstance();
             Document document = Jsoup.connect(urlSource).get();
-            R bookDescription = setDescriptionForBook(document, bookDescriptionType);
+            R bookDescription;
+            if (Main.parserType.equals(ParserType.LABIRINT)) {
+                bookDescription = setDescriptionForLabirintBook(document, bookDescriptionType);
+            } else {
+                bookDescription = setDescriptionForGorodBook(document, bookDescriptionType);
+            }
             book.initializeBook(bookDescription);
             return book;
         } catch (IOException | NoSuchMethodException e) {
@@ -42,7 +91,7 @@ public class HtmlParser {
         return null;
     }
 
-    private <T extends BookDescriptionInterface> T setDescriptionForBook(Document document, Class<T> descriptionType) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+    private <T extends BookDescriptionInterface> T setDescriptionForLabirintBook(Document document, Class<T> descriptionType) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         Map<String, Object> bookData = new HashMap<>();
         T bookDescription = descriptionType.getDeclaredConstructor().newInstance();
         Element productInfo = document.selectFirst("#product-info");
@@ -88,6 +137,36 @@ public class HtmlParser {
         bookData.put("series", series);
         bookData.put("isbns", isbns);
         bookData.put("images", images);
+        bookDescription.initializeDescriptionForBook(bookData);
+        return bookDescription;
+    }
+
+    private <T extends BookDescriptionInterface> T setDescriptionForGorodBook(Document document, Class<T> descriptionType) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+        Map<String, Object> bookData = new HashMap<>();
+        T bookDescription = descriptionType.getDeclaredConstructor().newInstance();
+        String bookId = document.selectXpath("//span[contains(text(), 'ID товара')]/following-sibling::span").text();
+        String isbnString = document.selectXpath("//span[@itemprop='isbn']").text();
+//        ArrayList<String> images = new ArrayList<>();
+        ArrayList<String> isbns = new ArrayList<>();
+        isbns.add(isbnString.replaceAll("-", ""));
+        if (!isbns.contains(Main.mainIsbn.replaceAll("-", "")) && bookDescription instanceof BookDescription) {
+            isbns.add(Main.mainIsbn);
+        }
+        ArrayList<String> authors = new ArrayList<>();
+        Elements authorsElms = document.selectXpath("//a[@itemprop='author']");
+        authorsElms.forEach(aut -> authors.add(aut.text()));
+        String title = document.selectXpath("//div[@class='product-detail-title']//h1").text();
+        String annotation = document.selectXpath("//div[@class='product-description-area product-page__additional']//*[@itemprop='description']").text();
+        String publisher = document.selectXpath("//div[@class='product-detail-characteristics__item']//*[@itemprop='publisher']").text();
+        String series = document.selectXpath("//div[@class='product-detail-characteristics__series-items']//a").text();
+        bookData.put("bookId", bookId);
+        bookData.put("authors", authors);
+        bookData.put("title", title);
+        bookData.put("annotation", annotation);
+        bookData.put("publisher", publisher);
+        bookData.put("series", series);
+        bookData.put("isbns", isbns);
+//        bookData.put("images", images);
         bookDescription.initializeDescriptionForBook(bookData);
         return bookDescription;
     }
@@ -152,7 +231,7 @@ public class HtmlParser {
             return null;
         }
         Document document = Jsoup.connect(sectionUrl).get();
-        String elementOfSection = "a.cover";
+        String elementOfSection = Main.parserType.equals(ParserType.LABIRINT) ? "a.cover" : ".product-card__picture";
         Elements sectionElements = document.select(elementOfSection);
         sectionUrls = extractUrlOfSection(sectionElements);
         return sectionUrls;
@@ -165,13 +244,22 @@ public class HtmlParser {
         Element sectionUrl;
         try {
             if (section == GroupTypes.GENRE) {
-                sectionUrl = Objects.requireNonNull(document.selectFirst("." + "thermo-item_last")).selectFirst("a");
+                if (Main.parserType.equals(ParserType.LABIRINT)) {
+                    sectionUrl = Objects.requireNonNull(document.selectFirst(".thermo-item_last")).selectFirst("a");
+                } else {
+                    sectionUrl = document.select(".breadcrumbs__link").last();
+                }
             } else {
-                sectionUrl = Objects.requireNonNull(document.selectFirst("." + sectionName)).selectFirst("a");
+                if (Main.parserType.equals(ParserType.LABIRINT)) {
+                    sectionUrl = Objects.requireNonNull(document.selectFirst("." + sectionName)).selectFirst("a");
+                } else {
+                    sectionUrl = document.selectXpath("//div[@class='product-detail-characteristics__series-items']//a").get(0);
+                }
             }
             assert sectionUrl != null;
             urlOfSection = Main.webPageUrl + sectionUrl.attr("href");
-        } catch (Exception e) {
+        } catch (
+                Exception e) {
             e.getStackTrace();
         }
         return urlOfSection;

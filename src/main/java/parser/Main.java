@@ -2,6 +2,7 @@ package parser;
 
 import parser.entities.Book;
 import parser.entities.BookDescription;
+import parser.entities.ParserType;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,14 +17,17 @@ import java.util.stream.Collectors;
 
 public class Main {
     public static Book<BookDescription> book = new Book<>();
-    public static String FILE_NAME_PATH = "/books.json";
+    public static String LAB_FILE_NAME_PATH = "/booksLabirint.json";
+    public static String GOR_FILE_NAME_PATH = "/booksGorod.json";
     public static String LOGS_PATH = "/logs";
-    public static String webPageUrl = System.getenv("PARSE_SERVICE");
+    public static String webPageUrl;
+    public static String webPageUrlGorod = System.getenv("PARSE_SERVICE_GOROD");
     public static String mainIsbn;
     private static final Object bookLock = new Object();
     private static boolean webDriver;
     private static boolean oneThread;
     private static boolean inParallel;
+    public static ParserType parserType;
     private static int depth;
     private static String jarPath;
     private static final HtmlParser htmlParser = new HtmlParser();
@@ -46,8 +50,12 @@ public class Main {
         oneThread = Boolean.parseBoolean(args[2]);
         inParallel = Boolean.parseBoolean(args[3]);
         webDriver = Boolean.parseBoolean(args[4]);
+        parserType = ParserType.valueOf(args[5]);
+        webPageUrl = parserType.equals(ParserType.LABIRINT) ? System.getenv("PARSE_SERVICE")
+                : System.getenv("PARSE_SERVICE_GOROD");
         setJarPath();
-        jsonWriter = new JsonWriter(jarPath + FILE_NAME_PATH);
+        String filePath = parserType.equals(ParserType.LABIRINT) ? LAB_FILE_NAME_PATH : GOR_FILE_NAME_PATH;
+        jsonWriter = new JsonWriter(jarPath + filePath);
     }
 
     private static void setJarPath() throws URISyntaxException {
