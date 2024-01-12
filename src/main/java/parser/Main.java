@@ -17,8 +17,7 @@ import java.util.stream.Collectors;
 
 public class Main {
     public static Book<BookDescription> book = new Book<>();
-    public static String LAB_FILE_NAME_PATH = "/booksLabirint.json";
-    public static String GOR_FILE_NAME_PATH = "/booksGorod.json";
+    public static String FILE_NAME_PATH = "/books.json";
     public static String LOGS_PATH = "/logs";
     public static String webPageUrl;
     public static String webPageUrlGorod = System.getenv("PARSE_SERVICE_GOROD");
@@ -54,8 +53,7 @@ public class Main {
         webPageUrl = parserType.equals(ParserType.LABIRINT) ? System.getenv("PARSE_SERVICE")
                 : System.getenv("PARSE_SERVICE_GOROD");
         setJarPath();
-        String filePath = parserType.equals(ParserType.LABIRINT) ? LAB_FILE_NAME_PATH : GOR_FILE_NAME_PATH;
-        jsonWriter = new JsonWriter(jarPath + filePath);
+        jsonWriter = new JsonWriter(jarPath + FILE_NAME_PATH);
     }
 
     private static void setJarPath() throws URISyntaxException {
