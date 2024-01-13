@@ -10,6 +10,10 @@ import parser.entities.*;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.regex.Matcher;
@@ -23,6 +27,7 @@ public class HtmlParser {
     private final String GOR_SEARCH_QUERY = "https://www.chitai-gorod.ru/search?phrase=";
     private String urlSource;
     private String cssQuery;
+    private String gorodImageUrl;
 
     public ArrayList<String> getMainBooksUrl(String isbn) throws IOException {
         if (Main.parserType.equals(ParserType.LABIRINT)) {
@@ -59,9 +64,6 @@ public class HtmlParser {
 //        } catch (IOException e) {
 //            e.printStackTrace();
 //        }
-//        Document document = Jsoup.connect(urlSource).get();
-//        Elements urls = document.select(cssQuery);
-//        urls.forEach(url -> mainBooksUrls.add(Main.webPageUrl + url.attr("href")));
 //        return mainBooksUrls;
 //    }
 
@@ -77,6 +79,7 @@ public class HtmlParser {
         try {
             T book = bookType.getDeclaredConstructor().newInstance();
             Document document = Jsoup.connect(urlSource).get();
+//            gorodImageUrl = "https://www.chitai-gorod.ru/product/oge-2024-obshchestvoznanie-tipovye-ekzamenacionnye-varianty-30-variantov-3005958";
             R bookDescription;
             if (Main.parserType.equals(ParserType.LABIRINT)) {
                 bookDescription = setDescriptionForLabirintBook(document, bookDescriptionType);
@@ -146,19 +149,19 @@ public class HtmlParser {
     private <T extends BookDescriptionInterface> T setDescriptionForGorodBook(Document document, Class<T> descriptionType) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         Map<String, Object> bookData = new HashMap<>();
         T bookDescription = descriptionType.getDeclaredConstructor().newInstance();
-        String bookId = document.selectXpath("//span[contains(text(), 'ID товара')]/following-sibling::span").text();
-        String isbnString = document.selectXpath("//span[@itemprop='isbn']").text();
         ArrayList<String> images = new ArrayList<>();
         ArrayList<String> isbns = new ArrayList<>();
+        String bookId = document.selectXpath("//span[contains(text(), 'ID товара')]/following-sibling::span").text();
         Elements isbnsEls = document.selectXpath("//span[@itemprop='isbn']");
         isbnsEls.forEach(isbn -> isbns.add(isbn.text().replaceAll("-", "")));
         if (!isbns.contains(Main.mainIsbn.replaceAll("-", "")) && bookDescription instanceof BookDescription) {
             isbns.add(Main.mainIsbn);
         }
-        String mainImage = document.selectXpath("//img[@class='product-gallery__image']").attr("src");
-        Elements thumbImages = document.selectXpath("//img[contains(@class,'thumbnails-gallery__image')]");
-        images.add(extractBaseUrl(mainImage));
-        thumbImages.forEach(img -> images.add(extractBaseUrl(img.text())));
+        if (bookDescription instanceof BookDescription) {
+            String mainImage = extractBaseUrl(document.selectXpath("//img[@class='product-gallery__image']").attr("src"));
+            images.add(extractBaseUrl(mainImage));
+            images.addAll(getGorodBookOtherImages(mainImage));
+        }
         ArrayList<String> authors = new ArrayList<>();
         Elements authorsElms = document.selectXpath("//a[@itemprop='author']");
         authorsElms.forEach(aut -> authors.add(aut.text()));
@@ -176,6 +179,26 @@ public class HtmlParser {
         bookData.put("images", images);
         bookDescription.initializeDescriptionForBook(bookData);
         return bookDescription;
+    }
+
+    private List<String> getGorodBookOtherImages(String url) {
+        List<String> imageList = new ArrayList<>();
+        try {
+            String imageUrl;
+            for (int i = 1; i < 100; i++) {
+                imageUrl = url.replaceAll("(.+)-", "$1_" + i + "-");
+                URL urlRequest = new URI(imageUrl).toURL();
+                HttpURLConnection connection = (HttpURLConnection) urlRequest.openConnection();
+                connection.setRequestMethod("GET");
+                connection.setDoOutput(true);
+                connection.getInputStream();
+                imageList.add(imageUrl);
+            }
+            return imageList;
+        } catch (IOException | URISyntaxException e) {
+            e.getStackTrace();
+            return imageList;
+        }
     }
 
     private String extractBaseUrl(String url) {
