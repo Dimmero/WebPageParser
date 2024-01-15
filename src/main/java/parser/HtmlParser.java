@@ -79,7 +79,6 @@ public class HtmlParser {
         try {
             T book = bookType.getDeclaredConstructor().newInstance();
             Document document = Jsoup.connect(urlSource).get();
-//            gorodImageUrl = "https://www.chitai-gorod.ru/product/oge-2024-obshchestvoznanie-tipovye-ekzamenacionnye-varianty-30-variantov-3005958";
             R bookDescription;
             if (Main.parserType.equals(ParserType.LABIRINT)) {
                 bookDescription = setDescriptionForLabirintBook(document, bookDescriptionType);
@@ -160,7 +159,7 @@ public class HtmlParser {
         if (bookDescription instanceof BookDescription) {
             String mainImage = extractBaseUrl(document.selectXpath("//img[@class='product-gallery__image']").attr("src"));
             images.add(extractBaseUrl(mainImage));
-            images.addAll(getGorodBookOtherImages(mainImage));
+//            images.addAll(getGorodBookOtherImages(mainImage));
         }
         ArrayList<String> authors = new ArrayList<>();
         Elements authorsElms = document.selectXpath("//a[@itemprop='author']");
@@ -186,16 +185,17 @@ public class HtmlParser {
         try {
             String imageUrl;
             for (int i = 1; i < 100; i++) {
-                imageUrl = url.replaceAll("(.+)-", "$1_" + i + "-");
+                imageUrl = url.replaceAll("(.*?)(-\\d+)?(\\.jpg)", "$1_" + i + "$2$3");
                 URL urlRequest = new URI(imageUrl).toURL();
                 HttpURLConnection connection = (HttpURLConnection) urlRequest.openConnection();
                 connection.setRequestMethod("GET");
                 connection.setDoOutput(true);
                 connection.getInputStream();
+                Thread.sleep(10000);
                 imageList.add(imageUrl);
             }
             return imageList;
-        } catch (IOException | URISyntaxException e) {
+        } catch (IOException | URISyntaxException | InterruptedException e) {
             e.getStackTrace();
             return imageList;
         }
