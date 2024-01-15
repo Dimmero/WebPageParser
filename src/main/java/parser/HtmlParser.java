@@ -157,9 +157,9 @@ public class HtmlParser {
             isbns.add(Main.mainIsbn);
         }
         if (bookDescription instanceof BookDescription) {
-            String mainImage = extractBaseUrl(document.selectXpath("//img[@class='product-gallery__image']").attr("src"));
-            images.add(extractBaseUrl(mainImage));
-//            images.addAll(getGorodBookOtherImages(mainImage));
+            String mainImage = document.selectXpath("//img[@class='product-gallery__image']").attr("src");
+            images.add(mainImage);
+            images.addAll(getGorodBookOtherImages(mainImage));
         }
         ArrayList<String> authors = new ArrayList<>();
         Elements authorsElms = document.selectXpath("//a[@itemprop='author']");
@@ -183,6 +183,7 @@ public class HtmlParser {
     private List<String> getGorodBookOtherImages(String url) {
         List<String> imageList = new ArrayList<>();
         try {
+//            String query = "?width=310&height=500&fit=bounds";
             String imageUrl;
             for (int i = 1; i < 100; i++) {
                 imageUrl = url.replaceAll("(.*?)(-\\d+)?(\\.jpg)", "$1_" + i + "$2$3");
@@ -191,11 +192,11 @@ public class HtmlParser {
                 connection.setRequestMethod("GET");
                 connection.setDoOutput(true);
                 connection.getInputStream();
-                Thread.sleep(10000);
+//                Thread.sleep(10000);
                 imageList.add(imageUrl);
             }
             return imageList;
-        } catch (IOException | URISyntaxException | InterruptedException e) {
+        } catch (IOException | URISyntaxException /*| InterruptedException */e) {
             e.getStackTrace();
             return imageList;
         }
