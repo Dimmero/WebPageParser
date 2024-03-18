@@ -110,10 +110,7 @@ public class HtmlParser {
         ArrayList<String> authors = new ArrayList<>();
         try {
             String authorsString = Objects.requireNonNull(productInfo.selectFirst(".authors")).text().replace("Автор:", "");
-            String[] arrayOfAuthors = authorsString.split(",");
-            for (String aut : arrayOfAuthors) {
-                authors.add(aut.trim());
-            }
+            authors = getArrayOfAuthors(authorsString);
         } catch (Exception e) {
             e.getStackTrace();
         }
@@ -330,5 +327,16 @@ public class HtmlParser {
             arrayOfIsbns[i] = arrayOfIsbns[i].replace("-", "").trim();
         }
         return new ArrayList<>(Arrays.asList(arrayOfIsbns));
+    }
+
+    private ArrayList<String> getArrayOfAuthors(String authorString) {
+        String[] arrayOfAuthors = authorString.split(",");
+        for (int i = 0; i < arrayOfAuthors.length; i++) {
+            if (arrayOfAuthors[i].contains("все") || arrayOfAuthors[i].contains("скрыть")) {
+                arrayOfAuthors[i] = arrayOfAuthors[i].replace("все", "");
+                arrayOfAuthors[i] = arrayOfAuthors[i].replace("скрыть", "");
+            }
+        }
+        return new ArrayList<>(Arrays.asList(arrayOfAuthors));
     }
 }
