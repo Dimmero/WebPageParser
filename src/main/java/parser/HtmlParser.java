@@ -170,24 +170,24 @@ public class HtmlParser {
         T bookDescription = descriptionType.getDeclaredConstructor().newInstance();
         ArrayList<String> images = new ArrayList<>();
         ArrayList<String> isbns = new ArrayList<>();
-        String bookId = document.selectXpath("//span[contains(text(), 'ID товара')]/following-sibling::span").text();
+        String bookId = document.selectXpath("(//span[contains(text(), 'ID товара')]/following-sibling::span)[1]").text();
         Elements isbnsEls = document.selectXpath("//span[@itemprop='isbn']");
         isbnsEls.forEach(isbn -> isbns.add(isbn.text().replaceAll("-", "")));
         if (!isbns.contains(Main.mainIsbn.replaceAll("-", "")) && bookDescription instanceof BookDescription) {
             isbns.add(Main.mainIsbn);
         }
         if (bookDescription instanceof BookDescription) {
-            String mainImage = document.selectXpath("//img[@class='product-gallery__image']").attr("src");
+            String mainImage = document.selectXpath("//meta[@name='og:image']").attr("content");
             images.add(mainImage);
             images.addAll(getGorodBookOtherImages(mainImage));
         }
         ArrayList<String> authors = new ArrayList<>();
         Elements authorsElms = document.selectXpath("//a[@itemprop='author']");
         authorsElms.forEach(aut -> authors.add(aut.text()));
-        String title = document.selectXpath("//div[@class='product-detail-title']//h1").text();
-        String annotation = document.selectXpath("//div[@class='product-description-area product-page__additional']//*[@itemprop='description']").text();
-        String publisher = document.selectXpath("//div[@class='product-detail-characteristics__item']//*[@itemprop='publisher']").text();
-        String series = document.selectXpath("//div[@class='product-detail-characteristics__series-items']//a").text();
+        String title = document.selectXpath("//h1[@class='detail-product__header-title']").text();
+        String annotation = document.selectXpath("//article[@class='detail-description__text']").text();
+        String publisher = document.selectXpath("(//div[@class='product-detail-features__item']//*[@itemprop='publisher'])[1]").text();
+        String series = document.selectXpath("(//div[@class='product-detail-features__item']//a)[2]").text();
         bookData.put("bookId", bookId);
         bookData.put("authors", authors);
         bookData.put("title", title);
