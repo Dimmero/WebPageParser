@@ -27,7 +27,7 @@ public class HtmlParser {
     private final String GOR_SEARCH_QUERY = "https://www.chitai-gorod.ru/search?phrase=";
     private String urlSource;
     private String cssQuery;
-    private String gorodImageUrl;
+    private String labirintImageUrl;
 
     public ArrayList<String> getMainBooksUrl(String isbn) throws IOException {
         if (Main.parserType.equals(ParserType.LABIRINT)) {
@@ -124,6 +124,10 @@ public class HtmlParser {
         assert productImage != null;
         Elements imagesElements = productImage.select("img");
         for (Element elImg : imagesElements) {
+            if (imagesElements.size() > 1 && imagesElements.indexOf(elImg) == 0) {
+                images.add(getGoodFirstImage());
+                continue;
+            }
             if (elImg.attr("data-src").isBlank()) {
                 images.add(elImg.attr("src"));
             } else {
@@ -140,6 +144,25 @@ public class HtmlParser {
         bookData.put("images", images);
         bookDescription.initializeDescriptionForBook(bookData);
         return bookDescription;
+    }
+
+    private String getGoodFirstImage() {
+        try {
+            Document document = Jsoup.connect(urlSource).get();
+            Element productImage = document.selectFirst(cssQuery);
+            assert productImage != null;
+            Elements imagesElements = productImage.select("img");
+            for (Element elImg : imagesElements) {
+                if (elImg.attr("data-src").isBlank()) {
+                    return elImg.attr("src");
+                } else {
+                    return elImg.attr("data-src");
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return null;
     }
 
     private <T extends BookDescriptionInterface> T setDescriptionForGorodBook(Document document, Class<T> descriptionType) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
