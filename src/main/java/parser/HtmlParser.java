@@ -182,8 +182,8 @@ public class HtmlParser {
             images.addAll(getGorodBookOtherImages(mainImage));
         }
         ArrayList<String> authors = new ArrayList<>();
-        Elements authorsElms = document.selectXpath("//a[@itemprop='author']");
-        authorsElms.forEach(aut -> authors.add(aut.text()));
+        Elements authorsElms = document.selectXpath("//a[@class='product-info-authors__author']");
+        authorsElms.forEach(aut -> authors.add(aut.text().replace(",", "")));
         String title = document.selectXpath("//h1[@class='detail-product__header-title']").text();
         String annotation = document.selectXpath("//article[@class='detail-description__text']").text();
         String publisher = document.selectXpath("(//div[@class='product-detail-features__item']//*[@itemprop='publisher'])[1]").text();
@@ -307,16 +307,16 @@ public class HtmlParser {
                 if (Main.parserType.equals(ParserType.LABIRINT)) {
                     sectionUrl = Objects.requireNonNull(document.selectFirst(".thermo-item_last")).selectFirst("a");
                 } else {
-                    sectionUrl = document.select(".breadcrumbs__link").last();
+                    sectionUrl = document.selectXpath("//a[@class='product-breadcrumbs__link']").last();
                 }
             } else {
                 if (Main.parserType.equals(ParserType.LABIRINT)) {
                     sectionUrl = Objects.requireNonNull(document.selectFirst("." + sectionName)).selectFirst("a");
                 } else {
                     if (section.equals(GroupTypes.AUTHORS)) {
-                        sectionUrl = document.selectXpath("//a[@itemprop='author']").get(0);
+                        sectionUrl = document.selectXpath("//a[@class='product-info-authors__author']").get(0);
                     } else if (section.equals(GroupTypes.SERIES)) {
-                        sectionUrl = document.selectXpath("//div[@class='product-detail-characteristics__series-items']//a").get(0);
+                        sectionUrl = document.selectXpath("//a[contains(@href, 'series')]").get(0);
                     }
                 }
             }
@@ -363,3 +363,8 @@ public class HtmlParser {
         return new ArrayList<>(Arrays.asList(arrayOfAuthors));
     }
 }
+
+//String title = document.selectXpath("//h1[@class='detail-product__header-title']").text();
+//String annotation = document.selectXpath("//article[@class='detail-description__text']").text();
+//String publisher = document.selectXpath("(//div[@class='product-detail-features__item']//*[@itemprop='publisher'])[1]").text();
+//String series = document.selectXpath("(//div[@class='product-detail-features__item']//a)[2]").text();
