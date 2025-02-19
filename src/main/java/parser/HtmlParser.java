@@ -98,42 +98,40 @@ public class HtmlParser {
     private <T extends BookDescriptionInterface> T setDescriptionForLabirintBook(Document document, Class<T> descriptionType) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         Map<String, Object> bookData = new HashMap<>();
         T bookDescription = descriptionType.getDeclaredConstructor().newInstance();
-        Element productInfo = document.selectFirst("#product-info");
-        assert productInfo != null;
-        String bookId = productInfo.attr("data-product-id");
-        String isbnString = productInfo.select(".isbn").text().replace("ISBN: ", "");
+        String bookId = document.selectXpath("//meta[@itemprop='sku']").attr("content");
+        String isbnString = document.selectXpath("//meta[@itemprop='isbn']").attr("content");
         ArrayList<String> images = new ArrayList<>();
         ArrayList<String> isbns = getArrayOfIsbns(isbnString);
+        List<String> authors = new ArrayList<>();
         if (!isbns.contains(Main.mainIsbn) && bookDescription instanceof BookDescription) {
             isbns.add(Main.mainIsbn);
         }
-        ArrayList<String> authors = new ArrayList<>();
         try {
-            String authorsString = Objects.requireNonNull(productInfo.selectFirst(".authors")).text().replace("Автор:", "");
-            authors = getArrayOfAuthors(authorsString);
+            Elements authorsEls = document.selectXpath("//div[@id='сharacteristics']//div[contains(text(), 'Автор') or contains(text(), 'Редактор')]/..//a");
+            authors = authorsEls.stream().map(Element::text).collect(Collectors.toList());
         } catch (Exception e) {
             e.getStackTrace();
         }
-        String title = productInfo.attr("data-name");
-        String annotation = (document.select("#smallannotation").size() == 0)
-                ? Objects.requireNonNull(document.select("#product-about").select("p").first()).text()
-                : Objects.requireNonNull(document.select("#product-about").select("p").last()).text();
-        String publisher = productInfo.attr("data-pubhouse");
-        String series = productInfo.attr("data-series");
-        Element productImage = document.selectFirst("#product-image");
-        assert productImage != null;
-        Elements imagesElements = productImage.select("img");
-        for (Element elImg : imagesElements) {
-            if (imagesElements.size() > 1 && imagesElements.indexOf(elImg) == 0) {
-                images.add(getGoodFirstImage());
-                continue;
-            }
-            if (elImg.attr("data-src").isBlank()) {
-                images.add(elImg.attr("src"));
-            } else {
-                images.add(elImg.attr("data-src"));
-            }
-        }
+        String title = document.selectXpath("//h1[@itemprop='name']").text();
+        String annotation = document.selectXpath("//div[@id='annotation']").text().replace("Аннотация", "");
+        String publisher = document.selectXpath("//div[@id='сharacteristics']//div[contains(text(), 'Издательство')]/..//a").text();
+        String series = document.selectXpath("//div[@id='сharacteristics']//div[contains(text(), 'Серия')]/..//a").text();
+        String image = document.selectXpath("//meta[@itemprop='image']").attr("content").replace("//", "");
+        images.add(image);
+//        Element productImage = document.selectFirst("#product-image");
+//        assert productImage != null;
+//        Elements imagesElements = productImage.select("img");
+//        for (Element elImg : imagesElements) {
+//            if (imagesElements.size() > 1 && imagesElements.indexOf(elImg) == 0) {
+//                images.add(getGoodFirstImage());
+//                continue;
+//            }
+//            if (elImg.attr("data-src").isBlank()) {
+//                images.add(elImg.attr("src"));
+//            } else {
+//                images.add(elImg.attr("data-src"));
+//            }
+//        }
         bookData.put("bookId", bookId);
         bookData.put("authors", authors);
         bookData.put("title", title);
@@ -299,34 +297,42 @@ public class HtmlParser {
 
     public String getSectionUrl(GroupTypes section, String url) throws IOException {
         Document document = Jsoup.connect(url).get();
-        String urlOfSection = "";
-        String sectionName = section.name().toLowerCase();
-        Element sectionUrl = null;
+        boolean isLabirint = Main.parserType.equals(ParserType.LABIRINT);
+
         try {
-            if (section.equals(GroupTypes.GENRE)) {
-                if (Main.parserType.equals(ParserType.LABIRINT)) {
-                    sectionUrl = Objects.requireNonNull(document.selectFirst(".thermo-item_last")).selectFirst("a");
-                } else {
-                    sectionUrl = document.selectXpath("//a[@class='product-breadcrumbs__link']").last();
+            Element sectionUrl = getSectionElement(document, section, isLabirint);
+
+            if (sectionUrl != null) {
+                String urlResult = sectionUrl.attr("href");
+                if (!urlResult.contains("https")) {
+                    urlResult = Main.webPageUrl + urlResult;
                 }
-            } else {
-                if (Main.parserType.equals(ParserType.LABIRINT)) {
-                    sectionUrl = Objects.requireNonNull(document.selectFirst("." + sectionName)).selectFirst("a");
-                } else {
-                    if (section.equals(GroupTypes.AUTHORS)) {
-                        sectionUrl = document.selectXpath("//a[@class='product-info-authors__author']").get(0);
-                    } else if (section.equals(GroupTypes.SERIES)) {
-                        sectionUrl = document.selectXpath("//a[contains(@href, 'series')]").get(0);
-                    }
-                }
+                return urlResult; // Returning the correct URL
             }
-            assert sectionUrl != null;
-            urlOfSection = Main.webPageUrl + sectionUrl.attr("href");
-        } catch (
-                Exception e) {
-            e.getStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        return urlOfSection;
+
+        return "";
+    }
+
+    private Element getSectionElement(Document document, GroupTypes section, boolean isLabirint) {
+        if (section == GroupTypes.GENRE) {
+            return isLabirint
+                    ? document.selectXpath("//span[@itemprop='itemListElement']//a").last()
+                    : document.selectXpath("//a[@class='product-breadcrumbs__link']").last();
+        }
+        if (section == GroupTypes.AUTHORS) {
+            return isLabirint
+                    ? document.selectXpath("//div[@id='сharacteristics']//div[contains(text(), 'Автор') or contains(text(), 'Редактор')]/..//a").first()
+                    : document.selectXpath("//a[@class='product-info-authors__author']").first();
+        }
+        if (section == GroupTypes.SERIES) {
+            return isLabirint
+                    ? document.selectXpath("//h2[contains(text(), 'Книги из серии ')]//a").first()
+                    : document.selectXpath("//a[contains(@href, 'series')]").first();
+        }
+        return null;
     }
 
     private ArrayList<String> extractUrlOfSection(Elements section) {
@@ -341,12 +347,6 @@ public class HtmlParser {
     private ArrayList<String> getArrayOfIsbns(String isbnString) {
         String[] arrayOfIsbns = isbnString.split(",");
         for (int i = 0; i < arrayOfIsbns.length; i++) {
-            if (i == 0) {
-                arrayOfIsbns[i] = arrayOfIsbns[i].replace("все", "");
-            }
-            if (i == arrayOfIsbns.length - 1) {
-                arrayOfIsbns[i] = arrayOfIsbns[i].replace("скрыть", "");
-            }
             arrayOfIsbns[i] = arrayOfIsbns[i].replace("-", "").trim();
         }
         return new ArrayList<>(Arrays.asList(arrayOfIsbns));
