@@ -107,10 +107,16 @@ public class HtmlParser {
             isbns.add(Main.mainIsbn);
         }
         try {
-            Elements authorsEls = document.selectXpath("//div[@id='сharacteristics']//div[contains(text(), 'Автор') or contains(text(), 'Редактор')]/..//a");
-            authors = authorsEls.stream().map(Element::text).collect(Collectors.toList());
+            Elements authorEls = document.selectXpath("//div[@id='сharacteristics']//div[contains(text(), 'Автор')]/..//a");
+            Elements editorEls = document.selectXpath("//div[@id='сharacteristics']//div[contains(text(), 'Редактор')]/..//a");
+
+            if (!authorEls.isEmpty()) {
+                authors = authorEls.stream().map(Element::text).collect(Collectors.toList());
+            } else if (!editorEls.isEmpty()) {
+                authors = editorEls.stream().map(Element::text).collect(Collectors.toList());
+            }
         } catch (Exception e) {
-            e.getStackTrace();
+            e.printStackTrace();
         }
         String title = document.selectXpath("//h1[@itemprop='name']").text();
         String annotation = document.selectXpath("//div[@id='annotation']").text().replace("Аннотация", "");
@@ -118,20 +124,6 @@ public class HtmlParser {
         String series = document.selectXpath("//div[@id='сharacteristics']//div[contains(text(), 'Серия')]/..//a").text();
         String image = document.selectXpath("//meta[@itemprop='image']").attr("content").replace("//", "");
         images.add(image);
-//        Element productImage = document.selectFirst("#product-image");
-//        assert productImage != null;
-//        Elements imagesElements = productImage.select("img");
-//        for (Element elImg : imagesElements) {
-//            if (imagesElements.size() > 1 && imagesElements.indexOf(elImg) == 0) {
-//                images.add(getGoodFirstImage());
-//                continue;
-//            }
-//            if (elImg.attr("data-src").isBlank()) {
-//                images.add(elImg.attr("src"));
-//            } else {
-//                images.add(elImg.attr("data-src"));
-//            }
-//        }
         bookData.put("bookId", bookId);
         bookData.put("authors", authors);
         bookData.put("title", title);
@@ -323,9 +315,19 @@ public class HtmlParser {
                     : document.selectXpath("//a[@class='product-breadcrumbs__link']").last();
         }
         if (section == GroupTypes.AUTHORS) {
-            return isLabirint
-                    ? document.selectXpath("//div[@id='сharacteristics']//div[contains(text(), 'Автор') or contains(text(), 'Редактор')]/..//a").first()
-                    : document.selectXpath("//a[@class='product-info-authors__author']").first();
+            if (isLabirint) {
+                Element author = document.selectXpath("//div[@id='сharacteristics']//div[contains(text(), 'Автор')]/..//a").first();
+                Element editor = document.selectXpath("//div[@id='сharacteristics']//div[contains(text(), 'Редактор')]/..//a").first();
+                if (author != null) {
+                    // If "Автор" exists, use it
+                    return author;
+                } else if (editor != null) {
+                    // If "Автор" is missing, fallback to "Редактор"
+                    return editor;
+                }
+            } else {
+                document.selectXpath("//a[@class='product-info-authors__author']").first();
+            }
         }
         if (section == GroupTypes.SERIES) {
             return isLabirint
