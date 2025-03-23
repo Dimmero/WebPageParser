@@ -29,15 +29,28 @@ public class HtmlParser {
     private String cssQuery;
     private String labirintImageUrl;
 
-    public ArrayList<String> getMainBooksUrl(String isbn) throws IOException {
+    public List<String> getMainBooksUrl(String isbn) throws IOException {
         if (Main.parserType.equals(ParserType.LABIRINT)) {
             urlSource = "https://www.labirint.ru/search/" + isbn + "/?stype=0";
-            cssQuery = ".product-card__img";
-        } else {
+            cssQuery = "//*[@class='product-card__img']";
+//            cssQuery = ".product-card__img";
+        } else if (Main.parserType.equals(ParserType.GOROD)) {
             urlSource = "https://www.chitai-gorod.ru/search?phrase=" + isbn;
-            cssQuery = ".product-card__picture";
+            cssQuery = "(//article//*[@class='product-card__title'])[1]";
+//            cssQuery = ".product-card__picture";
+        } else if (Main.parserType.equals(ParserType.FKNIGA)) {
+            urlSource = "https://fkniga.ru/search/?q=" + isbn;
+            cssQuery = "//div[contains(@class, 'card__body')]//a[contains(@class, 'card__title')]";
+            List<String> urlsWithHash = getMainBooksFromSource();
+            return formatUrlsWithHash(urlsWithHash);
         }
         return getMainBooksFromSource();
+    }
+
+    public List<String> formatUrlsWithHash(List<String> urlsWithHash) {
+        return urlsWithHash.stream()
+                .map(url -> url.split("\\?")[0]) // Remove query parameters
+                .collect(Collectors.toList());   // Collect results into a new list
     }
 
 //    private ArrayList<String> getMainBooksFromSource() throws IOException {
@@ -67,10 +80,10 @@ public class HtmlParser {
 //        return mainBooksUrls;
 //    }
 
-    private ArrayList<String> getMainBooksFromSource() throws IOException {
+    private List<String> getMainBooksFromSource() throws IOException {
         ArrayList<String> mainBooksUrls = new ArrayList<>();
         Document document = Jsoup.connect(urlSource).get();
-        Elements urls = document.select(cssQuery);
+        Elements urls = document.selectXpath(cssQuery);
         urls.forEach(url -> mainBooksUrls.add(Main.webPageUrl + url.attr("href")));
         return mainBooksUrls;
     }
@@ -79,11 +92,13 @@ public class HtmlParser {
         try {
             T book = bookType.getDeclaredConstructor().newInstance();
             Document document = Jsoup.connect(urlSource).get();
-            R bookDescription;
+            R bookDescription = null;
             if (Main.parserType.equals(ParserType.LABIRINT)) {
                 bookDescription = setDescriptionForLabirintBook(document, bookDescriptionType);
-            } else {
+            } else if (Main.parserType.equals(ParserType.GOROD)) {
                 bookDescription = setDescriptionForGorodBook(document, bookDescriptionType);
+            } else if (Main.parserType.equals(ParserType.FKNIGA)) {
+                bookDescription = setDescriptionForFknigaBook(document, bookDescriptionType);
             }
             book.initializeBook(bookDescription);
             return book;
@@ -186,6 +201,70 @@ public class HtmlParser {
         bookData.put("series", series);
         bookData.put("isbns", isbns);
         bookData.put("images", images);
+        bookDescription.initializeDescriptionForBook(bookData);
+        return bookDescription;
+    }
+
+    private <T extends BookDescriptionInterface> T setDescriptionForFknigaBook(Document document, Class<T> descriptionType) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException, IOException {
+        String latestYear = document.selectXpath("//div[@class='goodCard__tabs']//a[1]").attr("href");
+        latestYear = Main.webPageUrl + formatUrlsWithHash(List.of(latestYear)).get(0);
+        document = Jsoup.connect(latestYear).get();
+
+        Map<String, Object> bookData = new HashMap<>();
+        T bookDescription = descriptionType.getDeclaredConstructor().newInstance();
+        String bookId = document.selectXpath("(//div[contains(@class, 'goodCard__article') and contains(text(), 'Артикул')])[1]").text().replace("Артикул", "").trim();
+        String title = document.selectXpath("(//h1)[1]").text().split("\\|")[0].trim();
+
+        String publisher = document.selectXpath("//span[contains(text(), 'Издательство:')]/..")
+                .text().replace("Издательство:", "").trim();
+        String brand = document.selectXpath("//span[contains(text(), 'Брэнд:')]/..")
+                .text().replace("Брэнд:", "").trim();
+        String publisherFinalValue;
+        if (!publisher.isEmpty()) {
+            publisherFinalValue = publisher;
+        } else if (!brand.isEmpty()) {
+            publisherFinalValue = brand;
+        } else {
+            publisherFinalValue = "Неизвестно";
+        }
+        ArrayList<String> isbns = new ArrayList<>();
+        String isbn = document.selectXpath("//span[contains(text(), 'ISBN:')]/..").text().replace("ISBN:", "").replace("-", "").trim();
+        isbns.add(isbn);
+        ArrayList<String> authors = new ArrayList<>();
+        Elements authorsEle = document.selectXpath("//span[contains(text(), 'Автор:')]/..");
+        if (!authorsEle.isEmpty()) {
+            authorsEle.forEach(aut -> authors.add(aut.text().replace("Автор:", "").trim()));
+        }
+        if (authors.isEmpty()) {
+            authors.add("Автор не указан");
+        }
+
+        ArrayList<String> images = new ArrayList<>();
+        String image = Main.webPageUrl + document.selectXpath("(//img[@class='goodCardImg'])[1]").attr("src");
+        images.add(image);
+        String annotation = document.selectXpath("//div[@class='container-sm']").text();
+
+        String publisherSeries = document.selectXpath("//h5[contains(text(), 'Издательская программа')]/..//a")
+                .text().replace("Издательство:", "").trim();
+        String publishingProgram = document.selectXpath("//h5[contains(text(), 'Образовательная программа')]/..//a")
+                .text().replace("Брэнд:", "").trim();
+        String publisherSeriesFinalValue;
+        if (!publisherSeries.isEmpty()) {
+            publisherSeriesFinalValue = publisherSeries;
+        } else if (!publishingProgram.isEmpty()) {
+            publisherSeriesFinalValue = publishingProgram;
+        } else {
+            publisherSeriesFinalValue = "Неизвестно";
+        }
+
+        bookData.put("bookId", bookId);
+        bookData.put("title", title);
+        bookData.put("isbns", isbns);
+        bookData.put("authors", authors);
+        bookData.put("annotation", annotation);
+        bookData.put("publisher", publisherFinalValue);
+        bookData.put("images", images);
+        bookData.put("publishingSeries", publisherSeriesFinalValue);
         bookDescription.initializeDescriptionForBook(bookData);
         return bookDescription;
     }

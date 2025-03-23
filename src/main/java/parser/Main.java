@@ -21,6 +21,7 @@ public class Main {
     public static String LOGS_PATH = "/logs";
     public static String webPageUrl;
     public static String webPageUrlGorod = System.getenv("PARSE_SERVICE_GOROD");
+    public static String webPageUrlIKniga = System.getenv("PARSE_SERVICE_IKNIGA");
     public static String mainIsbn;
     private static final Object bookLock = new Object();
     private static boolean webDriver;
@@ -50,8 +51,15 @@ public class Main {
         inParallel = Boolean.parseBoolean(args[3]);
         webDriver = Boolean.parseBoolean(args[4]);
         parserType = ParserType.valueOf(args[5]);
-        webPageUrl = parserType.equals(ParserType.LABIRINT) ? System.getenv("PARSE_SERVICE")
-                : System.getenv("PARSE_SERVICE_GOROD");
+        if (parserType.equals(ParserType.LABIRINT)) {
+            webPageUrl = System.getenv("PARSE_SERVICE");
+        } else if (parserType.equals(ParserType.GOROD)) {
+            webPageUrl = System.getenv("PARSE_SERVICE_GOROD");
+        } else if (parserType.equals(ParserType.FKNIGA)) {
+            webPageUrl = System.getenv("PARSE_SERVICE_FKNIGA");
+        }
+//        webPageUrl = parserType.equals(ParserType.LABIRINT) ? System.getenv("PARSE_SERVICE")
+//                : System.getenv("PARSE_SERVICE_GOROD");
         setJarPath();
         jsonWriter = new JsonWriter(jarPath + FILE_NAME_PATH);
     }
