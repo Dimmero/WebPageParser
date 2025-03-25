@@ -274,7 +274,7 @@ public class HtmlParser {
         bookData.put("annotation", annotation);
         bookData.put("publisher", publisherFinalValue);
         bookData.put("images", images);
-        bookData.put("publishingSeries", publisherSeriesFinalValue);
+        bookData.put("series", publisherSeriesFinalValue);
         bookDescription.initializeDescriptionForBook(bookData);
         return bookDescription;
     }

@@ -18,7 +18,6 @@ public class BookDescription implements BookDescriptionInterface {
     private String annotation;
     private String publisher;
     private String series;
-    private String publishingSeries;
     private String bookId;
     private ArrayList<String> isbns;
     private ArrayList<String> images;
@@ -33,6 +32,5 @@ public class BookDescription implements BookDescriptionInterface {
         setImages((ArrayList<String>) attributes.get("images"));
         setAnnotation((String) attributes.get("annotation"));
         setSeries((String) attributes.get("series"));
-        setPublishingSeries((String) attributes.get("publishingSeries"));
     }
 }
