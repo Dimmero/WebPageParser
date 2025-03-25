@@ -42,6 +42,9 @@ public class HtmlParser {
             urlSource = "https://fkniga.ru/search/?q=" + isbn;
             cssQuery = "//div[contains(@class, 'card__body')]//a[contains(@class, 'card__title')]";
             List<String> urlsWithHash = getMainBooksFromSource();
+            if (urlsWithHash == null) {
+                return null;
+            }
             return formatUrlsWithHash(urlsWithHash);
         }
         return getMainBooksFromSource();
@@ -83,6 +86,10 @@ public class HtmlParser {
     private List<String> getMainBooksFromSource() throws IOException {
         ArrayList<String> mainBooksUrls = new ArrayList<>();
         Document document = Jsoup.connect(urlSource).get();
+        Element button = document.selectFirst(".change--search");
+        if (button != null) {
+            return null;
+        }
         Elements urls = document.selectXpath(cssQuery);
         urls.forEach(url -> mainBooksUrls.add(Main.webPageUrl + url.attr("href")));
         return mainBooksUrls;

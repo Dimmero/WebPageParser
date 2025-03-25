@@ -75,6 +75,8 @@ public class Main {
             for (String mainBookUrl : mainBookUrls) {
                 processSingleBook(mainBookUrl);
             }
+        } else {
+            System.out.println("No books found for isbn: " + mainIsbn);
         }
     }
 
