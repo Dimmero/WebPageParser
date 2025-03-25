@@ -252,7 +252,7 @@ public class HtmlParser {
         ArrayList<String> images = new ArrayList<>();
         String image = Main.webPageUrl + document.selectXpath("(//img[@class='goodCardImg'])[1]").attr("src");
         images.add(image);
-        String annotation = document.selectXpath("//div[@class='container-sm']").text();
+        String annotation = document.selectXpath("//div[@class='container-sm']").text().replace("Описание товара", "").trim();
 
         String publisherSeries = document.selectXpath("//h5[contains(text(), 'Издательская серия')]/..//a")
                 .text().replace("Издательская серия:", "").trim();
