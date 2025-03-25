@@ -214,8 +214,11 @@ public class HtmlParser {
 
     private <T extends BookDescriptionInterface> T setDescriptionForFknigaBook(Document document, Class<T> descriptionType) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException, IOException {
         String latestYear = document.selectXpath("//div[@class='goodCard__tabs']//a[1]").attr("href");
-        latestYear = Main.webPageUrl + formatUrlsWithHash(List.of(latestYear)).get(0);
-        document = Jsoup.connect(latestYear).get();
+        if (!latestYear.isEmpty()) {
+            latestYear = Main.webPageUrl + formatUrlsWithHash(List.of(latestYear)).get(0);
+            document = Jsoup.connect(latestYear).get();
+        }
+
 
         Map<String, Object> bookData = new HashMap<>();
         T bookDescription = descriptionType.getDeclaredConstructor().newInstance();
@@ -251,8 +254,8 @@ public class HtmlParser {
         images.add(image);
         String annotation = document.selectXpath("//div[@class='container-sm']").text();
 
-        String publisherSeries = document.selectXpath("//h5[contains(text(), 'Издательская программа')]/..//a")
-                .text().replace("Издательство:", "").trim();
+        String publisherSeries = document.selectXpath("//h5[contains(text(), 'Издательская серия')]/..//a")
+                .text().replace("Издательская серия:", "").trim();
         String publishingProgram = document.selectXpath("//h5[contains(text(), 'Образовательная программа')]/..//a")
                 .text().replace("Брэнд:", "").trim();
         String publisherSeriesFinalValue;
