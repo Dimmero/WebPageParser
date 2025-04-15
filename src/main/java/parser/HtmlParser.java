@@ -1,10 +1,13 @@
 package parser;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.Setter;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.parser.Parser;
 import org.jsoup.select.Elements;
 import parser.entities.*;
 
@@ -117,7 +120,7 @@ public class HtmlParser {
         return null;
     }
 
-    private <T extends BookDescriptionInterface> T setDescriptionForLabirintBook(Document document, Class<T> descriptionType) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+    private <T extends BookDescriptionInterface> T setDescriptionForLabirintBook(Document document, Class<T> descriptionType) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException, JsonProcessingException {
         Map<String, Object> bookData = new HashMap<>();
         T bookDescription = descriptionType.getDeclaredConstructor().newInstance();
         String bookId = document.selectXpath("//meta[@itemprop='sku']").attr("content");
@@ -141,7 +144,24 @@ public class HtmlParser {
             e.printStackTrace();
         }
         String title = document.selectXpath("//h1[@itemprop='name']").text();
-        String annotation = document.selectXpath("//div[@id='annotation']").text().replace("Аннотация", "");
+        String annotationPartial = document.selectXpath("//div[@id='annotation']//div[contains(@class, 'content')]").text();
+        Elements scriptWithAnnotation = document.selectXpath("//footer//following::script[@id='__NUXT_DATA__']");
+        Element element = scriptWithAnnotation.get(0);
+        Pattern pattern = Pattern.compile("\"Ру\",\"(.+?)\",\\[");
+        Matcher matcher = pattern.matcher(element.html());
+
+        String annotationHtml = null;
+        if (matcher.find()) {
+            annotationHtml = matcher.group(1);
+        }
+        assert annotationHtml != null;
+        ObjectMapper mapper = new ObjectMapper();
+        String unescapedJson = mapper.readValue("\"" + annotationHtml + "\"", String.class);
+
+        // Step 2: Decode HTML entities and strip tags
+        String htmlDecoded = Parser.unescapeEntities(unescapedJson, true);
+        String annotation = Jsoup.parse(htmlDecoded).text();
+
         String publisher = document.selectXpath("//div[@id='сharacteristics']//div[contains(text(), 'Издательство')]/..//a").text();
         String series = document.selectXpath("//div[@id='сharacteristics']//div[contains(text(), 'Серия')]/..//a").text();
         String image = document.selectXpath("//meta[@itemprop='image']").attr("content").replace("//", "");
