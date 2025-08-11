@@ -209,9 +209,15 @@ public class HtmlParser {
             isbns.add(Main.mainIsbn);
         }
         if (bookDescription instanceof BookDescription) {
-            String mainImage = document.selectXpath("//meta[@name='og:image']").attr("content");
-            images.add(mainImage);
-            images.addAll(getGorodBookOtherImages(mainImage));
+            Elements imagesEls = document.selectXpath("//*[@class='product-media__thumbnails']//li//img");
+            for (Element im : imagesEls) {
+                String src = im.attr("src");
+                String cleaned = src.replaceAll("\\.jpg.*$", ".jpg");
+                images.add(cleaned);
+            }
+//            String mainImage = document.selectXpath("//meta[@property='og:image']").attr("content");
+//            images.add(mainImage);
+//            images.addAll(getGorodBookOtherImages(mainImage));
         }
         ArrayList<String> authors = new ArrayList<>();
         Elements authorsElms = document.selectXpath("//a[@class='product-info-authors__author']");
