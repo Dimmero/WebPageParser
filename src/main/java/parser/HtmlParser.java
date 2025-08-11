@@ -203,7 +203,7 @@ public class HtmlParser {
         ArrayList<String> images = new ArrayList<>();
         ArrayList<String> isbns = new ArrayList<>();
         String bookId = document.selectXpath("(//span[contains(text(), 'ID товара')]/following-sibling::span)[1]").text();
-        Elements isbnsEls = document.selectXpath("//span[@itemprop='isbn']");
+        Elements isbnsEls = document.selectXpath("(//span[@itemprop='isbn'])[1]");
         isbnsEls.forEach(isbn -> isbns.add(isbn.text().replaceAll("-", "")));
         if (!isbns.contains(Main.mainIsbn.replaceAll("-", "")) && bookDescription instanceof BookDescription) {
             isbns.add(Main.mainIsbn);
@@ -220,12 +220,12 @@ public class HtmlParser {
 //            images.addAll(getGorodBookOtherImages(mainImage));
         }
         ArrayList<String> authors = new ArrayList<>();
-        Elements authorsElms = document.selectXpath("//a[@class='product-info-authors__author']");
+        Elements authorsElms = document.selectXpath("//li[@class='product-authors__link']");
         authorsElms.forEach(aut -> authors.add(aut.text().replace(",", "")));
-        String title = document.selectXpath("//h1[@class='detail-product__header-title']").text();
-        String annotation = document.selectXpath("//article[@class='detail-description__text']").text();
-        String publisher = document.selectXpath("(//div[@class='product-detail-features__item']//*[@itemprop='publisher'])[1]").text();
-        String series = document.selectXpath("(//div[@class='product-detail-features__item']//a)[2]").text();
+        String title = document.selectXpath("//h1[@class='product-detail-page__title']").text();
+        String annotation = document.selectXpath("//article[@class='product-detail-page__detail-text']").text();
+        String publisher = document.selectXpath("(//span[contains(text(),'Издательство')]//parent::li//span[@class='product-properties-item__content']//a)[1]").text();
+        String series = document.selectXpath("//span[contains(text(),'Серия')]//parent::li//span[@class='product-properties-item__content']//a").text();
         bookData.put("bookId", bookId);
         bookData.put("authors", authors);
         bookData.put("title", title);
@@ -337,7 +337,8 @@ public class HtmlParser {
     }
 
     public void addNthRelatedBooks(GroupTypes group, String url, int limit, boolean useParallel) throws IOException {
-        List<String> relatedBooks = getBooksForSection(getSectionUrl(group, url));
+        String sectionUrl = getSectionUrl(group, url);
+        List<String> relatedBooks = getBooksForSection(sectionUrl);
         if (relatedBooks == null || relatedBooks.isEmpty()) {
             return;
         }
@@ -396,7 +397,7 @@ public class HtmlParser {
             return null;
         }
         Document document = Jsoup.connect(sectionUrl).get();
-        String elementOfSection = Main.parserType.equals(ParserType.LABIRINT) ? "a.cover" : ".product-card__picture";
+        String elementOfSection = Main.parserType.equals(ParserType.LABIRINT) ? "a.cover" : ".product-card__title";
         Elements sectionElements = document.select(elementOfSection);
         sectionUrls = extractUrlOfSection(sectionElements);
         return sectionUrls;
@@ -427,7 +428,7 @@ public class HtmlParser {
         if (section == GroupTypes.GENRE) {
             return isLabirint
                     ? document.selectXpath("//span[@itemprop='itemListElement']//a").last()
-                    : document.selectXpath("//a[@class='product-breadcrumbs__link']").last();
+                    : document.selectXpath("//a[@class='global-link--line breadcrumbs__item breadcrumbs__item--link']").last();
         }
         if (section == GroupTypes.AUTHORS) {
             if (isLabirint) {
@@ -441,7 +442,7 @@ public class HtmlParser {
                     return editor;
                 }
             } else {
-                document.selectXpath("//a[@class='product-info-authors__author']").first();
+                return document.selectXpath("//ul[@class='product-authors']//a").first();
             }
         }
         if (section == GroupTypes.SERIES) {
