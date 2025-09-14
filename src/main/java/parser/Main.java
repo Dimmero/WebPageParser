@@ -21,7 +21,7 @@ public class Main {
     public static String LOGS_PATH = "/logs";
     public static String webPageUrl;
     public static String webPageUrlGorod = System.getenv("PARSE_SERVICE_GOROD");
-    public static String webPageUrlIKniga = System.getenv("PARSE_SERVICE_IKNIGA");
+    public static String webPageUrlIKniga = System.getenv("PARSE_SERVICE_FKNIGA");
     public static String mainIsbn;
     private static final Object bookLock = new Object();
     private static boolean webDriver;
@@ -57,6 +57,8 @@ public class Main {
             webPageUrl = System.getenv("PARSE_SERVICE_GOROD");
         } else if (parserType.equals(ParserType.FKNIGA)) {
             webPageUrl = System.getenv("PARSE_SERVICE_FKNIGA");
+        } else if (parserType.equals(ParserType.BOOK24)) {
+            webPageUrl = System.getenv("PARSE_SERVICE_BOOK24");
         }
 //        webPageUrl = parserType.equals(ParserType.LABIRINT) ? System.getenv("PARSE_SERVICE")
 //                : System.getenv("PARSE_SERVICE_GOROD");

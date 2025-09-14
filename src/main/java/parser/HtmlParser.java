@@ -49,6 +49,9 @@ public class HtmlParser {
                 return null;
             }
             return formatUrlsWithHash(urlsWithHash);
+        } else if (Main.parserType.equals(ParserType.BOOK24)) {
+            urlSource = "https://book24.ru/search/?q=" + isbn;
+            cssQuery = "(//div[@class='product-list catalog__product-list']//div[@class='product-list__item']//a[@class='product-card__image-link'])[1]";
         }
         return getMainBooksFromSource();
     }
@@ -109,6 +112,8 @@ public class HtmlParser {
                 bookDescription = setDescriptionForGorodBook(document, bookDescriptionType);
             } else if (Main.parserType.equals(ParserType.FKNIGA)) {
                 bookDescription = setDescriptionForFknigaBook(document, bookDescriptionType);
+            } else if (Main.parserType.equals(ParserType.BOOK24)) {
+                bookDescription = setDescriptionForBook24Book(document, bookDescriptionType);
             }
             book.initializeBook(bookDescription);
             return book;
@@ -118,6 +123,46 @@ public class HtmlParser {
             throw new RuntimeException(e);
         }
         return null;
+    }
+
+    private <T extends BookDescriptionInterface> T setDescriptionForBook24Book(Document document, Class<T> descriptionType) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException, JsonProcessingException {
+        Map<String, Object> bookData = new HashMap<>();
+        T bookDescription = descriptionType.getDeclaredConstructor().newInstance();
+        String bookId = document.selectXpath("//div[@class='product-detail-page__sidebar-holder']").attr("data-b24-base-id");
+        String isbnString = document.selectXpath("(//span[contains(text(),'ISBN:')])[1]//ancestor::div[@class='product-characteristic__item']//dd//button").text().replace("-", "").trim();
+        List<String> authors = new ArrayList<>();
+        ArrayList<String> isbns = new ArrayList<>();
+        isbns.add(isbnString);
+//        if (!isbns.contains(Main.mainIsbn) && bookDescription instanceof BookDescription) {
+//            isbns.add(Main.mainIsbn);
+//        }
+        try {
+            Elements authorEls = document.selectXpath("(//span[contains(text(),' Автор: ')])[1]//ancestor::div[@class='product-characteristic__item']//dd//a");
+            authors = authorEls.stream().map(el -> el.attr("title")).collect(Collectors.toList());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        String title = document.selectXpath("//h1").text().split(":")[1].trim();
+        String annotation = document.selectXpath("//div[@id='product-about']//p").text();
+
+        String publisher = document.selectXpath("(//span[contains(text(),' Издательство: ')])[1]//ancestor::div[@class='product-characteristic__item']//dd//a").text();
+        String series = document.selectXpath("(//span[contains(text(), 'Серия:')])[1]//ancestor::div[@class='product-characteristic__item']//dd//a")
+                .stream()
+                .findFirst()
+                .map(Element::text)
+                .orElse(null);
+        Elements imagesels = document.selectXpath("//div[@class='product-poster__thumbs']//img");
+        List<String> images = imagesels.stream().map(el -> el.attr("data-src").replace("//", "").replaceAll("/resize/\\d+x\\d+", "")).collect(Collectors.toList());
+        bookData.put("bookId", bookId);
+        bookData.put("authors", authors);
+        bookData.put("title", title);
+        bookData.put("annotation", annotation);
+        bookData.put("publisher", publisher);
+        bookData.put("series", series);
+        bookData.put("isbns", isbns);
+        bookData.put("images", images);
+        bookDescription.initializeDescriptionForBook(bookData);
+        return bookDescription;
     }
 
     private <T extends BookDescriptionInterface> T setDescriptionForLabirintBook(Document document, Class<T> descriptionType) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException, JsonProcessingException {
@@ -397,8 +442,15 @@ public class HtmlParser {
             return null;
         }
         Document document = Jsoup.connect(sectionUrl).get();
-        String elementOfSection = Main.parserType.equals(ParserType.LABIRINT) ? "a.cover" : ".product-card__title";
-        Elements sectionElements = document.select(elementOfSection);
+        String elementOfSection = "";
+        if (Main.webPageUrl.contains("book24")) {
+            elementOfSection = "//a[@class='product-card__image-link']";
+        } else if (Main.webPageUrl.contains("labirint")) {
+            elementOfSection = "//a[contains(@class, 'cover')]";
+        } else {
+            elementOfSection = "//*[contains(@class, 'product-card__title')]";
+        }
+        Elements sectionElements = document.selectXpath(elementOfSection);
         sectionUrls = extractUrlOfSection(sectionElements);
         return sectionUrls;
     }
@@ -426,11 +478,19 @@ public class HtmlParser {
 
     private Element getSectionElement(Document document, GroupTypes section, boolean isLabirint) {
         if (section == GroupTypes.GENRE) {
+            if (Main.webPageUrl.contains("book24")) {
+                Element genreEl = document.selectXpath("//ol[@class='breadcrumbs__list']//a[contains(@href, '')]").last();
+                return genreEl;
+            }
             return isLabirint
                     ? document.selectXpath("//span[@itemprop='itemListElement']//a").last()
                     : document.selectXpath("//a[@class='global-link--line breadcrumbs__item breadcrumbs__item--link']").last();
         }
         if (section == GroupTypes.AUTHORS) {
+            if (Main.webPageUrl.contains("book24")) {
+                Element authorEl = document.selectXpath("(//span[contains(text(),' Автор: ')])[1]//ancestor::div[@class='product-characteristic__item']//dd//a").first();
+                return authorEl;
+            }
             if (isLabirint) {
                 Element author = document.selectXpath("//div[@id='сharacteristics']//div[contains(text(), 'Автор')]/..//a").first();
                 Element editor = document.selectXpath("//div[@id='сharacteristics']//div[contains(text(), 'Редактор')]/..//a").first();
@@ -446,6 +506,14 @@ public class HtmlParser {
             }
         }
         if (section == GroupTypes.SERIES) {
+            if (Main.webPageUrl.contains("book24")) {
+                Element seriesEl = document.selectXpath("(//span[contains(text(), 'Серия:')])[1]//ancestor::div[@class='product-characteristic__item']//dd//a").first();
+                if (seriesEl == null) {
+                    return null;
+                } else {
+                    return seriesEl;
+                }
+            }
             return isLabirint
                     ? document.selectXpath("//h2[contains(text(), 'Книги из серии ')]//a").first()
                     : document.selectXpath("//a[contains(@href, 'series')]").first();

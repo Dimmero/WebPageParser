@@ -3,5 +3,6 @@ package parser.entities;
 public enum ParserType {
     LABIRINT,
     GOROD,
-    FKNIGA
+    FKNIGA,
+    BOOK24
 }
