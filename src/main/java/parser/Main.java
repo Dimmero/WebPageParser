@@ -52,7 +52,7 @@ public class Main {
         webDriver = Boolean.parseBoolean(args[4]);
         parserType = ParserType.valueOf(args[5]);
         if (parserType.equals(ParserType.LABIRINT)) {
-            webPageUrl = System.getenv("PARSE_SERVICE");
+            webPageUrl = System.getenv("PARSE_SERVICE_LABIRINT");
         } else if (parserType.equals(ParserType.GOROD)) {
             webPageUrl = System.getenv("PARSE_SERVICE_GOROD");
         } else if (parserType.equals(ParserType.FKNIGA)) {
