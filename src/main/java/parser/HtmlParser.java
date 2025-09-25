@@ -142,7 +142,8 @@ public class HtmlParser {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        String title = document.selectXpath("//h1").text().split(":")[1].trim();
+//        String title = document.selectXpath("//h1").text().split(":")[1].trim();
+        String title = Objects.requireNonNull(document.selectXpath("//ol[@class='breadcrumbs__list']//li").last()).text();
         String annotation = document.selectXpath("//div[@id='product-about']//p").text();
 
         String publisher = document.selectXpath("(//span[contains(text(),' Издательство: ')])[1]//ancestor::div[@class='product-characteristic__item']//dd//a").text();
